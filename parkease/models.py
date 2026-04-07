@@ -14,8 +14,10 @@ class Apartment(models.Model):
 class User(models.Model):
     name = models.CharField(max_length=100)
     phone = models.CharField(max_length=15)
-    email = models.EmailField()
+    email = models.EmailField(unique=True)
     password = models.CharField(max_length=128)
+    apartment = models.ForeignKey(Apartment,on_delete=models.CASCADE,null=True)
+    flat_no = models.CharField(max_length=50,default="XXXX")
     created_at = models.DateTimeField(auto_now_add=True)
 
 class Vehicle(models.Model):

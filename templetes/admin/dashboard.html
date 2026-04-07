@@ -96,16 +96,171 @@
 
         .actions {
             margin-top: 28px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
         }
 
-        .logout-link {
+        .action-link {
             display: inline-block;
             padding: 14px 18px;
             border-radius: 14px;
-            background: var(--accent);
-            color: #fff;
             text-decoration: none;
             font-weight: 700;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+
+        .primary-action {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .primary-action[disabled] {
+            cursor: not-allowed;
+            opacity: 0.55;
+        }
+
+        .secondary-action {
+            background: #fff;
+            color: var(--ink);
+            border: 1px solid var(--border);
+        }
+
+        .section {
+            margin-top: 28px;
+            padding: 28px;
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+        }
+
+        .section h2 {
+            margin: 0 0 10px;
+            font-size: 1.6rem;
+        }
+
+        .section-copy {
+            margin-bottom: 20px;
+        }
+
+        .apartment-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+        }
+
+        .alert {
+            margin-top: 18px;
+            padding: 14px 16px;
+            border-radius: 16px;
+            font-size: 0.95rem;
+        }
+
+        .alert-error {
+            border: 1px solid #f5c2c7;
+            background: #fff1f2;
+            color: #9f1239;
+        }
+
+        .alert-success {
+            border: 1px solid #bbf7d0;
+            background: #f0fdf4;
+            color: #166534;
+        }
+
+        .empty-state {
+            padding: 18px;
+            border-radius: 18px;
+            border: 1px dashed var(--border);
+            color: var(--muted);
+            background: #fffdf9;
+        }
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(31, 41, 55, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+        }
+
+        .modal.is-open {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        .modal-panel {
+            width: min(100%, 460px);
+            background: #fffaf2;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 28px;
+            box-shadow: 0 24px 50px rgba(31, 41, 55, 0.14);
+        }
+
+        .modal-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .modal-top h3 {
+            margin: 0 0 8px;
+            font-size: 1.6rem;
+        }
+
+        .close-modal {
+            width: 40px;
+            height: 40px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: #fff;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .field {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            background: #fff;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+
+        .modal-submit {
+            width: 100%;
+            padding: 14px 18px;
+            border: none;
+            border-radius: 14px;
+            background: var(--accent);
+            color: #fff;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -125,12 +280,113 @@
                     <span>Email</span>
                     <strong>{{ admin_email }}</strong>
                 </div>
+                <div class="card">
+                    <span>Apartments</span>
+                    <strong>{{ apartment_count }}</strong>
+                </div>
             </div>
 
+            {% if apartment_error %}
+                <div class="alert alert-error">{{ apartment_error }}</div>
+            {% endif %}
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-success">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+
             <div class="actions">
-                <a class="logout-link" href="{% url 'logout_user' %}">Logout</a>
+                <button type="button" class="action-link primary-action" id="openApartmentModal" {% if apartment_count %}disabled{% endif %}>Register Your Apartment</button>
+                <a class="action-link secondary-action" href="{% url 'logout_user' %}">Logout</a>
             </div>
         </section>
+
+        <section class="section">
+            <h2>Your Apartments</h2>
+            <p class="section-copy">
+                {% if apartment_count %}
+                    This admin account has already registered its apartment.
+                {% else %}
+                    Register your apartment from this dashboard and keep your managed location in one place.
+                {% endif %}
+            </p>
+
+            {% if apartments %}
+                <div class="apartment-list">
+                    {% for apartment in apartments %}
+                        <div class="card">
+                            <span>Apartment</span>
+                            <strong>{{ apartment.name }}</strong>
+                            <p>{{ apartment.city }}</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">No apartments registered yet. Use the button above to add your first apartment.</div>
+            {% endif %}
+        </section>
     </main>
+
+    <div class="modal{% if show_apartment_modal %} is-open{% endif %}" id="apartmentModal" aria-hidden="{% if show_apartment_modal %}false{% else %}true{% endif %}">
+        <div class="modal-panel">
+            <div class="modal-top">
+                <div>
+                    <div class="eyebrow">New Apartment</div>
+                    <h3>Register Your Apartment</h3>
+                    <p>Add the apartment details for the currently logged-in admin account.</p>
+                </div>
+                <button type="button" class="close-modal" id="closeApartmentModal" aria-label="Close apartment form">X</button>
+            </div>
+
+            <form method="post" action="{% url 'create_apartment' %}">
+                {% csrf_token %}
+                <div class="field">
+                    <label for="apartment-name">Apartment Name</label>
+                    <input type="text" id="apartment-name" name="name" placeholder="Enter apartment name" value="{{ apartment_form_data.name|default:'' }}">
+                </div>
+
+                <div class="field">
+                    <label for="apartment-city">City</label>
+                    <input type="text" id="apartment-city" name="city" placeholder="Enter city" value="{{ apartment_form_data.city|default:'' }}">
+                </div>
+
+                <button type="submit" class="modal-submit">Register Apartment</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const apartmentModal = document.getElementById("apartmentModal");
+        const openApartmentModal = document.getElementById("openApartmentModal");
+        const closeApartmentModal = document.getElementById("closeApartmentModal");
+
+        function showApartmentModal() {
+            apartmentModal.classList.add("is-open");
+            apartmentModal.setAttribute("aria-hidden", "false");
+        }
+
+        function hideApartmentModal() {
+            apartmentModal.classList.remove("is-open");
+            apartmentModal.setAttribute("aria-hidden", "true");
+        }
+
+        if (!openApartmentModal.disabled) {
+            openApartmentModal.addEventListener("click", showApartmentModal);
+        }
+        closeApartmentModal.addEventListener("click", hideApartmentModal);
+
+        apartmentModal.addEventListener("click", function (event) {
+            if (event.target === apartmentModal) {
+                hideApartmentModal();
+            }
+        });
+
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape" && apartmentModal.classList.contains("is-open")) {
+                hideApartmentModal();
+            }
+        });
+    </script>
 </body>
 </html>

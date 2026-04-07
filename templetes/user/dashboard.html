@@ -129,6 +129,12 @@
             box-shadow: 0 16px 32px rgba(154, 52, 18, 0.18);
         }
 
+        .cta-primary[disabled] {
+            opacity: 0.55;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
         .cta-secondary {
             background: var(--accent-soft);
             color: var(--accent-deep);
@@ -463,6 +469,65 @@
             font: inherit;
         }
 
+        .search-field {
+            position: relative;
+        }
+
+        .suggestion-list {
+            margin-top: 10px;
+            border: 1px solid #dbc8af;
+            border-radius: 18px;
+            background: #fffdfa;
+            overflow: hidden;
+            max-height: 240px;
+            overflow-y: auto;
+            display: none;
+            box-shadow: 0 16px 28px rgba(23, 32, 51, 0.08);
+        }
+
+        .suggestion-list.is-open {
+            display: block;
+        }
+
+        .suggestion-item {
+            width: 100%;
+            border: 0;
+            background: transparent;
+            text-align: left;
+            padding: 14px 16px;
+            cursor: pointer;
+            font: inherit;
+            color: var(--ink);
+            border-bottom: 1px solid #f3e6d5;
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: 0;
+        }
+
+        .suggestion-item:hover,
+        .suggestion-item.is-active {
+            background: #fff2df;
+        }
+
+        .suggestion-name {
+            display: block;
+            font-weight: 700;
+        }
+
+        .suggestion-city {
+            display: block;
+            color: var(--soft);
+            font-size: 0.9rem;
+            margin-top: 4px;
+        }
+
+        .search-meta {
+            margin-top: 8px;
+            color: var(--soft);
+            font-size: 0.88rem;
+        }
+
         .helper {
             color: var(--soft);
             font-size: 0.92rem;
@@ -528,6 +593,11 @@
                     Manage your vehicles, keep track of parking status, and review your apartment-linked access
                     details from one focused dashboard.
                 </p>
+                {% if not has_apartment_access %}
+                    <div class="message-stack">
+                        <div class="message message-warning">Select your apartment and enter your flat number before adding a vehicle.</div>
+                    </div>
+                {% endif %}
                 {% if messages %}
                     <div class="message-stack">
                         {% for message in messages %}
@@ -536,8 +606,8 @@
                     </div>
                 {% endif %}
                 <div class="cta-row">
-                    <button type="button" class="cta cta-primary" data-open-vehicle-modal>Add Vehicle</button>
-                    <a href="#" class="cta cta-secondary">View Your Apartment</a>
+                    <button type="button" class="cta cta-primary" data-open-vehicle-modal {% if not has_apartment_access %}disabled{% endif %}>Add Vehicle</button>
+                    <button type="button" class="cta cta-secondary" id="openApartmentModal">Select Apartment</button>
                 </div>
             </article>
 
@@ -555,6 +625,14 @@
                     <div class="meta-card">
                         <span>Phone</span>
                         <strong>{{ user_phone }}</strong>
+                    </div>
+                    <div class="meta-card">
+                        <span>Apartment</span>
+                        <strong>{% if user_apartment %}{{ user_apartment.name }}{% else %}Not selected yet{% endif %}</strong>
+                    </div>
+                    <div class="meta-card">
+                        <span>Flat No</span>
+                        <strong>{% if user_flat_no %}{{ user_flat_no }}{% else %}Not entered yet{% endif %}</strong>
                     </div>
                 </div>
             </aside>
@@ -629,10 +707,75 @@
                         Once you add a vehicle, it will appear here with its parking status, approval state,
                         and registration number.
                     </p>
-                    <button type="button" class="cta cta-primary" data-open-vehicle-modal>Add Your First Vehicle</button>
+                    <button type="button" class="cta cta-primary" data-open-vehicle-modal {% if not has_apartment_access %}disabled{% endif %}>Add Your First Vehicle</button>
                 </div>
             {% endif %}
         </section>
+    </div>
+
+    <div class="modal{% if show_apartment_modal %} is-open{% endif %}" id="apartmentModal" aria-hidden="{% if show_apartment_modal %}false{% else %}true{% endif %}">
+        <div class="modal-panel">
+            <div class="modal-top">
+                <div>
+                    <div class="eyebrow">Apartment Access</div>
+                    <h3>Select your apartment</h3>
+                    <p>Choose the apartment you belong to and enter your flat number before registering vehicles.</p>
+                </div>
+                <button type="button" class="close-modal" id="closeApartmentModal" aria-label="Close apartment form">X</button>
+            </div>
+
+            {% if apartment_selection_error %}
+                <div class="message message-error">{{ apartment_selection_error }}</div>
+            {% endif %}
+
+            <form method="post" action="{% url 'update_user_apartment' %}">
+                {% csrf_token %}
+                <div class="field-grid">
+                    <div class="field">
+                        <label for="apartment-search">Search Apartment</label>
+                        <div class="search-field">
+                            <input
+                                type="text"
+                                id="apartment-search"
+                                placeholder="Search by apartment name or city"
+                                autocomplete="off"
+                                value="{% if user_apartment %}{{ user_apartment.name }} - {{ user_apartment.city }}{% endif %}"
+                            >
+                            <input
+                                type="hidden"
+                                id="selected-apartment-id"
+                                name="apartment"
+                                value="{% if apartment_selection_data.apartment %}{{ apartment_selection_data.apartment }}{% elif user_apartment %}{{ user_apartment.id }}{% endif %}"
+                            >
+                            <div class="suggestion-list" id="apartmentSuggestions">
+                                {% for apartment in apartments %}
+                                    <button
+                                        type="button"
+                                        class="suggestion-item"
+                                        data-apartment-id="{{ apartment.id }}"
+                                        data-apartment-name="{{ apartment.name }}"
+                                        data-apartment-city="{{ apartment.city }}"
+                                    >
+                                        <span class="suggestion-name">{{ apartment.name }}</span>
+                                        <span class="suggestion-city">{{ apartment.city }}</span>
+                                    </button>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <p class="search-meta" id="apartmentSearchMeta">Start typing to see apartment suggestions.</p>
+                    </div>
+
+                    <div class="field">
+                        <label for="user-flat-no">Flat No</label>
+                        <input type="text" id="user-flat-no" name="flat_no" placeholder="A-203" value="{{ apartment_selection_data.flat_no|default:user_flat_no }}">
+                    </div>
+
+                    <p class="helper">You can update these apartment access details later from the same dashboard.</p>
+
+                    <button type="submit" class="submit-btn">Save Apartment Details</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <div class="modal{% if show_vehicle_modal %} is-open{% endif %}" id="vehicleModal" aria-hidden="{% if show_vehicle_modal %}false{% else %}true{% endif %}">
@@ -734,6 +877,14 @@
     </div>
 
     <script>
+        const apartmentModal = document.getElementById("apartmentModal");
+        const openApartmentButton = document.getElementById("openApartmentModal");
+        const closeApartmentButton = document.getElementById("closeApartmentModal");
+        const apartmentSearchInput = document.getElementById("apartment-search");
+        const apartmentIdInput = document.getElementById("selected-apartment-id");
+        const apartmentSuggestions = document.getElementById("apartmentSuggestions");
+        const apartmentSuggestionItems = Array.from(document.querySelectorAll(".suggestion-item"));
+        const apartmentSearchMeta = document.getElementById("apartmentSearchMeta");
         const vehicleModal = document.getElementById("vehicleModal");
         const openVehicleButtons = document.querySelectorAll("[data-open-vehicle-modal]");
         const closeVehicleButton = document.getElementById("closeVehicleModal");
@@ -744,6 +895,50 @@
         const editVehicleNumber = document.getElementById("edit-vehicle-number");
         const editVehicleType = document.getElementById("edit-vehicle-type");
         const editVehicleHelper = document.getElementById("editVehicleHelper");
+
+        function openApartmentModal() {
+            apartmentModal.classList.add("is-open");
+            apartmentModal.setAttribute("aria-hidden", "false");
+            apartmentSearchInput.focus();
+            filterApartmentSuggestions();
+        }
+
+        function closeApartmentModal() {
+            apartmentModal.classList.remove("is-open");
+            apartmentModal.setAttribute("aria-hidden", "true");
+        }
+
+        function setApartmentSelection(id, name, city) {
+            apartmentIdInput.value = id;
+            apartmentSearchInput.value = name + " - " + city;
+            apartmentSearchMeta.textContent = "Selected apartment: " + name + ", " + city + ".";
+            apartmentSuggestions.classList.remove("is-open");
+        }
+
+        function filterApartmentSuggestions() {
+            const query = apartmentSearchInput.value.trim().toLowerCase();
+            let visibleCount = 0;
+
+            apartmentSuggestionItems.forEach(function (item) {
+                const name = item.dataset.apartmentName.toLowerCase();
+                const city = item.dataset.apartmentCity.toLowerCase();
+                const matches = !query || name.includes(query) || city.includes(query);
+                item.hidden = !matches;
+                if (matches) {
+                    visibleCount += 1;
+                }
+            });
+
+            if (!query) {
+                apartmentSearchMeta.textContent = "Start typing to see apartment suggestions.";
+            } else if (visibleCount === 0) {
+                apartmentSearchMeta.textContent = "No apartments match your search.";
+            } else {
+                apartmentSearchMeta.textContent = visibleCount + " apartment(s) match your search.";
+            }
+
+            apartmentSuggestions.classList.toggle("is-open", visibleCount > 0);
+        }
 
         function openVehicleModal() {
             vehicleModal.classList.add("is-open");
@@ -765,8 +960,28 @@
             editVehicleModal.setAttribute("aria-hidden", "true");
         }
 
+        openApartmentButton.addEventListener("click", openApartmentModal);
+        closeApartmentButton.addEventListener("click", closeApartmentModal);
+        apartmentSearchInput.addEventListener("input", function () {
+            apartmentIdInput.value = "";
+            filterApartmentSuggestions();
+        });
+        apartmentSearchInput.addEventListener("focus", filterApartmentSuggestions);
+
+        apartmentSuggestionItems.forEach(function (item) {
+            item.addEventListener("click", function () {
+                setApartmentSelection(
+                    item.dataset.apartmentId,
+                    item.dataset.apartmentName,
+                    item.dataset.apartmentCity
+                );
+            });
+        });
+
         openVehicleButtons.forEach(function (button) {
-            button.addEventListener("click", openVehicleModal);
+            if (!button.disabled) {
+                button.addEventListener("click", openVehicleModal);
+            }
         });
 
         closeVehicleButton.addEventListener("click", closeVehicleModal);
@@ -790,6 +1005,18 @@
             });
         });
 
+        apartmentModal.addEventListener("click", function (event) {
+            if (event.target === apartmentModal) {
+                closeApartmentModal();
+            }
+        });
+
+        document.addEventListener("click", function (event) {
+            if (!event.target.closest(".search-field")) {
+                apartmentSuggestions.classList.remove("is-open");
+            }
+        });
+
         vehicleModal.addEventListener("click", function (event) {
             if (event.target === vehicleModal) {
                 closeVehicleModal();
@@ -803,6 +1030,9 @@
         });
 
         document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape" && apartmentModal.classList.contains("is-open")) {
+                closeApartmentModal();
+            }
             if (event.key === "Escape" && vehicleModal.classList.contains("is-open")) {
                 closeVehicleModal();
             }
@@ -810,6 +1040,17 @@
                 closeEditVehicleModal();
             }
         });
+
+        if (apartmentIdInput.value) {
+            const selectedApartment = apartmentSuggestionItems.find(function (item) {
+                return item.dataset.apartmentId === apartmentIdInput.value;
+            });
+
+            if (selectedApartment) {
+                apartmentSearchInput.value = selectedApartment.dataset.apartmentName + " - " + selectedApartment.dataset.apartmentCity;
+                apartmentSearchMeta.textContent = "Selected apartment: " + selectedApartment.dataset.apartmentName + ", " + selectedApartment.dataset.apartmentCity + ".";
+            }
+        }
     </script>
 </body>
 </html>

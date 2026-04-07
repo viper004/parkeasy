@@ -2,18 +2,24 @@ from django.contrib import messages
 from django.contrib.auth.hashers import check_password, make_password
 from django.shortcuts import redirect, render
 
-from .decorators import admin_login_required, login_required
-from .models import Admin, User, Vehicle
+from .decorators import account_login_required, admin_login_required, login_required
+from .models import *
 
 
 def _dashboard_context(request, extra=None):
     user = User.objects.filter(id=request.session.get("user_id")).first()
     vehicles = Vehicle.objects.filter(owner_id=request.session.get("user_id")).order_by("-id")
+    apartments = Apartment.objects.order_by("name")
+    has_apartment_access = bool(user and user.apartment_id and user.flat_no and user.flat_no != "XXXX")
 
     context = {
         "user_name": request.session.get("user_name"),
         "user_email": request.session.get("user_email"),
         "user_phone": user.phone if user else "",
+        "user_apartment": user.apartment if user else None,
+        "user_flat_no": user.flat_no if user and user.flat_no != "XXXX" else "",
+        "apartments": apartments,
+        "has_apartment_access": has_apartment_access,
         "vehicles": vehicles,
         "vehicle_count": vehicles.count(),
     }
@@ -23,9 +29,15 @@ def _dashboard_context(request, extra=None):
 
 
 def _admin_dashboard_context(request, extra=None):
+    admin = Admin.objects.filter(id=request.session.get("admin_id")).first()
+    apartments = Apartment.objects.filter(owner_id=request.session.get("admin_id")).order_by("-id")
+
     context = {
         "admin_name": request.session.get("admin_name"),
         "admin_email": request.session.get("admin_email"),
+        "apartments": apartments,
+        "apartment_count": apartments.count(),
+        "admin_record": admin,
     }
     if extra:
         context.update(extra)
@@ -107,9 +119,96 @@ def user_dashboard(request):
     return render(request, "user/dashboard.html", _dashboard_context(request))
 
 
+@login_required
+def update_user_apartment(request):
+    if request.method != "POST":
+        return redirect("dashboard")
+
+    apartment_id = request.POST.get("apartment", "").strip()
+    flat_no = request.POST.get("flat_no", "").strip().upper()
+    user = User.objects.filter(id=request.session.get("user_id")).first()
+
+    if user is None:
+        return redirect("home")
+
+    modal_data = {
+        "show_apartment_modal": True,
+        "apartment_selection_data": {
+            "apartment": apartment_id,
+            "flat_no": flat_no,
+        },
+    }
+
+    apartment = Apartment.objects.filter(id=apartment_id).first()
+    if apartment is None or not flat_no:
+        context = _dashboard_context(
+            request,
+            {
+                **modal_data,
+                "apartment_selection_error": "Select an apartment and enter your flat number.",
+            },
+        )
+        return render(request, "user/dashboard.html", context)
+
+    user.apartment = apartment
+    user.flat_no = flat_no
+    user.save(update_fields=["apartment", "flat_no"])
+    messages.success(request, "Apartment access details saved successfully.")
+    return redirect("dashboard")
+
+
 @admin_login_required
 def admin_dashboard(request):
     return render(request, "admin/dashboard.html", _admin_dashboard_context(request))
+
+
+@admin_login_required
+def create_apartment(request):
+    if request.method != "POST":
+        return redirect("admin_dashboard")
+
+    name = request.POST.get("name", "").strip()
+    city = request.POST.get("city", "").strip()
+
+    modal_data = {
+        "show_apartment_modal": True,
+        "apartment_form_data": {
+            "name": name,
+            "city": city,
+        },
+    }
+
+    if not name or not city:
+        context = _admin_dashboard_context(
+            request,
+            {
+                **modal_data,
+                "apartment_error": "Apartment name and city are required.",
+            },
+        )
+        return render(request, "admin/dashboard.html", context)
+
+    owner = Admin.objects.filter(id=request.session.get("admin_id")).first()
+    if owner is None:
+        return redirect("home")
+
+    if Apartment.objects.filter(owner=owner).exists():
+        context = _admin_dashboard_context(
+            request,
+            {
+                **modal_data,
+                "apartment_error": "Each admin can register only one apartment.",
+            },
+        )
+        return render(request, "admin/dashboard.html", context)
+
+    Apartment.objects.create(
+        owner=owner,
+        name=name,
+        city=city,
+    )
+    messages.success(request, "Apartment registered successfully.")
+    return redirect("admin_dashboard")
 
 
 @login_required
@@ -152,6 +251,16 @@ def create_vehicle(request):
     owner = User.objects.filter(id=request.session.get("user_id")).first()
     if owner is None:
         return redirect("home")
+
+    if not owner.apartment_id or not owner.flat_no or owner.flat_no == "XXXX":
+        context = _dashboard_context(
+            request,
+            {
+                **modal_data,
+                "vehicle_error": "Select your apartment and enter your flat number before adding a vehicle.",
+            },
+        )
+        return render(request, "user/dashboard.html", context)
 
     Vehicle.objects.create(
         owner=owner,
@@ -219,7 +328,7 @@ def update_vehicle(request, vehicle_id):
     return redirect("dashboard")
 
 
-@login_required
+@account_login_required
 def logout_user(request):
     request.session.flush()
     return redirect("home")
