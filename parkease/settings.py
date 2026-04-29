@@ -56,7 +56,7 @@ ROOT_URLCONF = 'parkease.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templetes'],
+        'DIRS': [BASE_DIR / 'templates', BASE_DIR / 'templetes'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

@@ -21,17 +21,14 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path("", views.home, name="home"),
-    path("create-user/", views.create_user, name="create_user"),
-    path("login/", views.login_user, name="login_user"),
-    path("user/apartment/", views.update_user_apartment, name="update_user_apartment"),
-    path("create-vehicle/", views.create_vehicle, name="create_vehicle"),
-    path("create-apartment/", views.create_apartment, name="create_apartment"),
-    path("vehicle/<int:vehicle_id>/edit/", views.update_vehicle, name="update_vehicle"),
-    path("dashboard/", views.user_dashboard, name="dashboard"),
-    path("admin-dashboard/", views.admin_dashboard, name="admin_dashboard"),
-    path("logout/", views.logout_user, name="logout_user"),
+    path('', views.home, name="home"),
+    path('login/', views.login_user, name="login_user"),
+    path('logout/', views.logout_user, name="logout_user"),
+    path('register/', views.create_user, name="create_user"),
+    path('admin/dashboard/', views.admin_dashboard, name="admin_dashboard"),
+    path('admin/members/add/', views.add_member, name="add_member"),
+    path('user/dashboard/', views.user_dashboard, name="user_dashboard"),
+    path('user/vehicles/add/', views.add_vehicle, name="add_vehicle"),
 ]
 
 if settings.DEBUG:

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PARXY Admin Dashboard</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Background */
+body {
+    height: 100vh;
+    background: url('https://images.unsplash.com/photo-1573348722427-f1d6819fdf98?q=80&w=1074') no-repeat center/cover;
+    display: flex;
+}
+
+/* Blur overlay */
+body::before {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backdrop-filter: blur(4px);
+    background: rgba(0,0,0,0.7);
+}
+
+/* Layout */
+.dashboard {
+    position: relative;
+    display: flex;
+    width: 100%;
+    z-index: 2;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 220px;
+    height: 100vh;
+    padding: 20px;
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(255,255,255,0.1);
+}
+
+.logo {
+    color: #d4af37;
+    font-size: 28px;
+    margin-bottom: 30px;
+    letter-spacing: 5px;
+}
+
+.menu a {
+    display: block;
+    color: #ccc;
+    text-decoration: none;
+    padding: 12px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    transition: 0.3s;
+}
+
+.menu a:hover {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+}
+
+/* Main */
+.main {
+    flex: 1;
+    padding: 30px;
+    color: white;
+}
+
+/* Header */
+.topbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+}
+
+.header {
+    font-size: 28px;
+    color: #d4af37;
+    margin-bottom: 20px;
+}
+
+.logout-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.14);
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(18px);
+    color: #f6e3a1;
+    text-decoration: none;
+    font-weight: 600;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+    transition: background 0.3s ease, transform 0.3s ease, color 0.3s ease;
+}
+
+.logout-btn:hover {
+    background: rgba(212,175,55,0.16);
+    color: #fff4c2;
+    transform: translateY(-1px);
+}
+
+/* Card */
+.card {
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(20px);
+    padding: 20px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.1);
+    margin-bottom: 20px;
+}
+
+/* Table */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #ccc;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+}
+
+th {
+    color: #d4af37;
+}
+
+tr {
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+/* Form */
+.input-box {
+    margin-bottom: 15px;
+}
+
+.input-box label {
+    font-size: 13px;
+    color: #ccc;
+}
+
+.input-box input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    background: rgba(0,0,0,0.4);
+    color: white;
+    margin-top: 5px;
+}
+
+/* Button */
+.btn {
+    padding: 12px 20px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(135deg, #d4af37, #f1d27a);
+    color: black;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn:hover {
+    transform: scale(1.05);
+}
+
+.messages {
+    margin-bottom: 20px;
+}
+
+.message {
+    padding: 12px 14px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.message.success {
+    background: rgba(34, 197, 94, 0.18);
+    border: 1px solid rgba(34, 197, 94, 0.35);
+    color: #bbf7d0;
+}
+
+.message.error {
+    background: rgba(239, 68, 68, 0.18);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    color: #fecaca;
+}
+
+/* Hide sections */
+.section {
+    display: none;
+}
+
+.active {
+    display: block;
+}
+</style>
+</head>
+
+<body>
+
+<div class="dashboard">
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo">PARXY</div>
+
+        <div class="menu">
+            <a href="#" onclick="showSection('dashboard')">Dashboard</a>
+            <a href="#" onclick="showSection('members')">Members</a>
+            <a href="#" onclick="showSection('add')">Add Member</a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main">
+        <div class="topbar">
+            <a href="{% url 'logout_user' %}" class="logout-btn">Logout</a>
+        </div>
+
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="message {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Dashboard -->
+        <div id="dashboard" class="section active">
+            <div class="header">Admin Dashboard</div>
+            <div class="card">
+                <h3>Welcome Admin 👋</h3>
+                <p>Manage apartment parking members easily.</p>
+            </div>
+        </div>
+
+        <!-- Members List -->
+        <div id="members" class="section">
+            <div class="header">Members</div>
+            <div class="card">
+                <table>
+                    <tr>
+                        <th>Nickname</th>
+                        <th>Phone</th>
+                        <th>Date of Birth</th>
+                    </tr>
+                    {% for user in users %}
+                    <tr>
+                        <td>{{ user.nick_name }}</td>
+                        <td>{{ user.phone }}</td>
+                        <td>{{ user.dob }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" style="text-align: center; color: #999;">No members found</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+
+        <!-- Add Member -->
+        <div id="add" class="section">
+            <div class="header">Add Member</div>
+            <div class="card">
+
+                <form method="post" action="{% url 'add_member' %}">
+                    {% csrf_token %}
+                    <div class="input-box">
+                        <label>Nickname</label>
+                        <input type="text" name="nickname" placeholder="Enter nickname" required>
+                    </div>
+
+                    <div class="input-box">
+                        <label>Phone Number</label>
+                        <input type="tel" name="phone" placeholder="Enter phone number" required>
+                    </div>
+
+                    <div class="input-box">
+                        <label>Date of Birth (DDMMYY)</label>
+                        <input type="text" name="dob" placeholder="DDMMYY" maxlength="6" required>
+                    </div>
+
+                    <button type="submit" class="btn">Add Member</button>
+                </form>
+
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+function showSection(id) {
+    document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+</script>
+
+</body>
+</html>
