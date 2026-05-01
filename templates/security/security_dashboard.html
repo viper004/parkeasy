@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PARXY Security Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/html5-qrcode"></script>
+
+    <style>
+        /* BASE THEME */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: url('https://images.unsplash.com/photo-1573348722427-f1d6819fdf98?q=80&w=1074') no-repeat center/cover;
+            overflow-x: hidden;
+            color: white;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(6px);
+            z-index: 0;
+        }
+
+        /* LAYOUT */
+        .dashboard {
+            position: relative;
+            display: flex;
+            width: 100%;
+            z-index: 2;
+        }
+
+        .sidebar {
+            width: 240px;
+            min-height: 100vh;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 24px;
+        }
+
+        .logo {
+            color: #d4af37;
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: 5px;
+            margin-bottom: 40px;
+        }
+
+        .main {
+            flex: 1;
+            padding: 32px;
+        }
+
+        .header {
+            font-size: 32px;
+            color: #d4af37;
+            margin-bottom: 22px;
+            font-weight: 700;
+        }
+
+        /* COMPONENTS */
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(22px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 24px;
+            margin-bottom: 26px;
+            text-align: center;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 14px;
+            padding: 14px 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .primary-btn {
+            background: linear-gradient(135deg, #d4af37, #f1d27a);
+            color: black;
+        }
+
+        /* SCANNER & TABS */
+        .tab-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.05);
+            transition: 0.3s;
+        }
+
+        .tab.active {
+            background: #d4af37;
+            color: black;
+        }
+
+        .action-section {
+            display: none;
+        }
+
+        .action-section.active {
+            display: block;
+        }
+
+        #reader {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 2px solid #d4af37;
+        }
+
+        /* LOG TABLE */
+        .log-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 14px;
+        }
+
+        .badge-in {
+            color: #86efac;
+            font-weight: 600;
+        }
+
+        .badge-out {
+            color: #fca5a5;
+            font-weight: 600;
+        }
+
+        /* STAFF INFO */
+        .staff-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .staff-photo {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #d4af37;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="dashboard">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="logo">PARXY</div>
+            <div class="staff-info">
+                {% if security.photo %}
+                <img src="{{ security.photo.url }}" class="staff-photo">
+                {% endif %}
+                <div style="text-align: left;">
+                    <p style="font-size: 14px; font-weight: 600;">{{ security.name }}</p>
+                    <p style="font-size: 10px; color: #d4af37;">SECURITY STAFF</p>
+                </div>
+            </div>
+            <a href="{% url 'logout_user' %}"
+                style="color: #f87171; text-decoration: none; font-size: 14px; font-weight: 600;">Logout</a>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main">
+            <div class="header">Security Gate Control</div>
+
+            <div class="card">
+                <div class="tab-container">
+                    <div class="tab active" onclick="switchTab('qr-scan')">QR Scanner</div>
+                    <div class="tab" onclick="switchTab('manual-entry')">Manual Entry</div>
+                </div>
+
+                <!-- QR SECTION -->
+                <div id="qr-scan" class="action-section active">
+                    <p style="margin-bottom: 20px; color: #d1d5db;">Scan vehicle QR for automatic entry/exit</p>
+                    <div id="reader"></div>
+                    <p id="scan-status" style="margin-top: 15px; font-weight: 600; min-height: 24px;"></p>
+                </div>
+
+                <!-- MANUAL SECTION -->
+                <div id="manual-entry" class="action-section">
+                    <form id="manual-form">
+                        <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 15px;">
+                            <label style="display:block; margin-bottom:10px; color:#9ca3af; font-size: 12px;">LICENSE
+                                PLATE NUMBER</label>
+                            <input type="text" id="manual_num" placeholder="KL-01-AB-1234"
+                                style="width: 100%; background: none; border: none; color: white; text-align: center; font-size: 20px; outline: none;">
+                        </div>
+                        <button type="submit" class="btn primary-btn" style="margin-top: 20px;">Process Vehicle</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ACTIVITY LOG -->
+            <div class="card">
+                <h3 style="color: #d4af37; margin-bottom: 20px; text-align: left;">Recent Logs</h3>
+                <div id="log-container">
+                    {% for log in recent_logs %}
+                    <div class="log-row">
+                        <span><strong>{{ log.vehicle.number }}</strong></span>
+                        <span class="{% if log.action == 'IN' %}badge-in{% else %}badge-out{% endif %}">
+                            {{ log.action }}
+                        </span>
+                        <span style="color: #9ca3af;">{{ log.timestamp|date:"H:i" }}</span>
+                    </div>
+                    {% empty %}
+                    <p style="color: #9ca3af; font-size: 14px; padding: 20px;">No gate activity recorded.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let html5QrcodeScanner;
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.action-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+
+            if (tabId === 'qr-scan') { startScanner(); }
+            else { stopScanner(); }
+        }
+
+        function startScanner() {
+            if (!html5QrcodeScanner) {
+                html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+            }
+            html5QrcodeScanner.render(onScanSuccess);
+        }
+
+        function stopScanner() {
+            if (html5QrcodeScanner) html5QrcodeScanner.clear();
+        }
+
+        function onScanSuccess(decodedText) {
+            processGateAction(decodedText);
+            // Brief pause to show result
+            html5QrcodeScanner.clear();
+            setTimeout(startScanner, 3000);
+        }
+
+        function processGateAction(vehicleNum) {
+            const statusLabel = document.getElementById('scan-status');
+            const formData = new FormData();
+            formData.append('vehicle_number', vehicleNum);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+            statusLabel.innerHTML = `Checking status for ${vehicleNum}...`;
+
+            fetch("{% url 'gate_control' %}", {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Check the is_in status and create the button
+                        const buttonText = data.is_in ? "PASS OUT" : "PASS IN";
+                        const btnClass = data.is_in ? "btn-out" : "btn-in"; // Optional: different colors
+
+                        statusLabel.innerHTML = `
+                <div style="margin-top:10px;">
+                    <p style="color:#fff; margin-bottom:10px;">Vehicle: ${data.vehicle_number}</p>
+                    <button class="btn primary-btn" onclick="confirmAction('${data.vehicle_number}')">
+                        ${buttonText}
+                    </button>
+                </div>
+            `;
+                    } else {
+                        statusLabel.innerText = data.message;
+                        statusLabel.style.color = "#fca5a5";
+                    }
+                });
+        }
+
+        // Add this new function to handle the actual entry/exit save
+        function confirmAction(vehicleNum) {
+            // You would create a second view or update gate_control 
+            // to accept a 'confirm' flag to actually toggle the database.
+            alert("Processing " + vehicleNum);
+            location.reload();
+        }
+
+        document.getElementById('manual-form').onsubmit = function (e) {
+            e.preventDefault();
+            const val = document.getElementById('manual_num').value.trim();
+            if (val) processGateAction(val);
+        };
+
+        window.onload = startScanner;
+    </script>
+</body>
+
+</html>

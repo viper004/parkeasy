@@ -28,8 +28,14 @@ urlpatterns = [
     path('admin/dashboard/', views.admin_dashboard, name="admin_dashboard"),
     path('admin/members/add/', views.add_member, name="add_member"),
     path('admin/vehicles/<int:vehicle_id>/approve/', views.approve_vehicle, name="approve_vehicle"),
+    path('admin/vehicles/<int:vehicle_id>/reject/', views.reject_vehicle, name="reject_vehicle"),
     path('user/dashboard/', views.user_dashboard, name="user_dashboard"),
     path('user/vehicles/add/', views.add_vehicle, name="add_vehicle"),
+    path('reapply-vehicle/',views.reapply_vehicle,name='reapply_vehicle'),
+    path('add-security/',views.add_security,name='add_security'),
+    path('delete-security/<int:id>/',views.delete_security,name='delete_security'),
+    path('security/dashboard/', views.security_dashboard, name="security_dashboard"),
+    path('security/gate-control/', views.gate_control, name="gate_control"),
 ]
 
 if settings.DEBUG:

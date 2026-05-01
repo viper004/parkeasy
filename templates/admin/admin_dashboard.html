@@ -1,497 +1,775 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PARXY Admin Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PARXY Admin Dashboard</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
 
-<style>
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Poppins', sans-serif;
-}
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
 
-/* Background */
-body {
-    height: 100vh;
-    background: url('https://images.unsplash.com/photo-1573348722427-f1d6819fdf98?q=80&w=1074') no-repeat center/cover;
-    display: flex;
-}
+        body {
+            min-height: 100vh;
+            background: url('https://images.unsplash.com/photo-1573348722427-f1d6819fdf98?q=80&w=1074') no-repeat center/cover;
+            overflow-x: hidden;
+        }
 
-/* Blur overlay */
-body::before {
-    content: "";
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    backdrop-filter: blur(4px);
-    background: rgba(0,0,0,0.7);
-}
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(6px);
+            z-index: 0;
+        }
 
-/* Layout */
-.dashboard {
-    position: relative;
-    display: flex;
-    width: 100%;
-    z-index: 2;
-}
+        .dashboard {
+            position: relative;
+            display: flex;
+            width: 100%;
+            z-index: 2;
+        }
 
-/* Sidebar */
-.sidebar {
-    width: 220px;
-    height: 100vh;
-    padding: 20px;
-    background: rgba(255,255,255,0.05);
-    backdrop-filter: blur(20px);
-    border-right: 1px solid rgba(255,255,255,0.1);
-}
+        .sidebar {
+            width: 240px;
+            min-height: 100vh;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 24px;
+        }
 
-.logo {
-    color: #d4af37;
-    font-size: 28px;
-    margin-bottom: 30px;
-    letter-spacing: 5px;
-}
+        .logo {
+            color: #d4af37;
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: 5px;
+            margin-bottom: 40px;
+        }
 
-.menu a {
-    display: block;
-    color: #ccc;
-    text-decoration: none;
-    padding: 12px;
-    border-radius: 10px;
-    margin-bottom: 10px;
-    transition: 0.3s;
-}
+        .menu a {
+            display: flex;
+            align-items: center;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            border-radius: 14px;
+            text-decoration: none;
+            color: #d1d5db;
+            transition: 0.3s ease;
+            font-weight: 500;
+        }
 
-.menu a:hover {
-    background: rgba(255,255,255,0.1);
-    color: #fff;
-}
+        .menu a:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: white;
+            transform: translateX(4px);
+        }
 
-/* Main */
-.main {
-    flex: 1;
-    padding: 30px;
-    color: white;
-}
+        .main {
+            flex: 1;
+            padding: 32px;
+            color: white;
+        }
 
-/* Header */
-.topbar {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: 20px;
-}
+        .topbar {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 24px;
+        }
 
-.header {
-    font-size: 28px;
-    color: #d4af37;
-    margin-bottom: 20px;
-}
+        .logout-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 22px;
+            border-radius: 999px;
+            text-decoration: none;
+            color: #f6e3a1;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(16px);
+            transition: 0.3s ease;
+            font-weight: 600;
+        }
 
-.logout-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 18px;
-    border-radius: 999px;
-    border: 1px solid rgba(255,255,255,0.14);
-    background: rgba(255,255,255,0.08);
-    backdrop-filter: blur(18px);
-    color: #f6e3a1;
-    text-decoration: none;
-    font-weight: 600;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.18);
-    transition: background 0.3s ease, transform 0.3s ease, color 0.3s ease;
-}
+        .logout-btn:hover {
+            background: rgba(212, 175, 55, 0.18);
+            transform: translateY(-2px);
+        }
 
-.logout-btn:hover {
-    background: rgba(212,175,55,0.16);
-    color: #fff4c2;
-    transform: translateY(-1px);
-}
+        .header {
+            font-size: 32px;
+            color: #d4af37;
+            margin-bottom: 22px;
+            font-weight: 700;
+        }
 
-/* Card */
-.card {
-    background: rgba(255,255,255,0.05);
-    backdrop-filter: blur(20px);
-    padding: 20px;
-    border-radius: 20px;
-    border: 1px solid rgba(255,255,255,0.1);
-    margin-bottom: 20px;
-}
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(22px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 24px;
+            margin-bottom: 26px;
+        }
 
-.vehicle-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 18px;
-}
+        .section {
+            display: none;
+        }
 
-.vehicle-card {
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 18px;
-    padding: 18px;
-}
+        .section.active {
+            display: block;
+        }
 
-.vehicle-card h4 {
-    color: #f6e3a1;
-    margin-bottom: 8px;
-}
+        .section-title {
+            color: #d4af37;
+            font-size: 22px;
+            margin-bottom: 20px;
+        }
 
-.vehicle-card p {
-    color: #d7d7d7;
-    margin-bottom: 6px;
-    font-size: 14px;
-}
+        .vehicle-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+        }
 
-.vehicle-card a {
-    color: #f1d27a;
-    text-decoration: none;
-}
+        .vehicle-card {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 22px;
+            transition: 0.3s ease;
+        }
 
-.vehicle-card a:hover {
-    text-decoration: underline;
-}
+        .vehicle-card:hover {
+            transform: translateY(-4px);
+        }
 
-.section-title {
-    color: #d4af37;
-    margin-bottom: 16px;
-}
+        .vehicle-card h4 {
+            color: #f6e3a1;
+            font-size: 24px;
+            margin-bottom: 12px;
+        }
 
-.vehicle-card form {
-    margin-top: 14px;
-}
+        .vehicle-card p {
+            color: #d7d7d7;
+            line-height: 1.7;
+            margin-bottom: 8px;
+        }
 
-.search-form {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    margin-bottom: 18px;
-    flex-wrap: wrap;
-}
+        .vehicle-card a {
+            color: #f1d27a;
+            text-decoration: none;
+        }
 
-.search-form input {
-    flex: 1;
-    min-width: 220px;
-    padding: 12px 14px;
-    border-radius: 10px;
-    border: none;
-    background: rgba(0,0,0,0.35);
-    color: white;
-}
+        .vehicle-card a:hover {
+            text-decoration: underline;
+        }
 
-.search-form input::placeholder {
-    color: #9ca3af;
-}
+        .form-box {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 18px;
+        }
 
-.btn-secondary {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 12px 18px;
-    border-radius: 10px;
-    border: 1px solid rgba(255,255,255,0.14);
-    background: rgba(255,255,255,0.08);
-    color: #f3f4f6;
-    text-decoration: none;
-}
+        .form-box label {
+            color: #d1d5db;
+            font-size: 13px;
+        }
 
-.btn-secondary:hover {
-    background: rgba(255,255,255,0.14);
-}
+        .form-box input,
+        .form-box select,
+        .form-box textarea {
+            width: 100%;
+            border: none;
+            outline: none;
+            border-radius: 14px;
+            padding: 14px;
+            background: rgba(0, 0, 0, 0.35);
+            color: white;
+        }
 
-/* Table */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    color: #ccc;
-}
+        .btn {
+            border: none;
+            border-radius: 14px;
+            padding: 14px 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.3s ease;
+            width: 100%;
+        }
 
-th, td {
-    padding: 12px;
-    text-align: left;
-}
+        .btn:hover {
+            transform: translateY(-2px);
+        }
 
-th {
-    color: #d4af37;
-}
+        .primary-btn {
+            background: linear-gradient(135deg, #d4af37, #f1d27a);
+            color: black;
+        }
 
-tr {
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-}
+        .reject-btn {
+            background: linear-gradient(135deg, #ef4444, #f87171);
+            color: white;
+        }
 
-/* Form */
-.input-box {
-    margin-bottom: 15px;
-}
+        .security-photo {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            display: block;
+            margin: auto;
+            border: 3px solid rgba(212, 175, 55, 0.4);
+        }
 
-.input-box label {
-    font-size: 13px;
-    color: #ccc;
-}
+        .reject-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.65);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+        }
 
-.input-box input {
-    width: 100%;
-    padding: 10px;
-    border-radius: 10px;
-    border: none;
-    background: rgba(0,0,0,0.4);
-    color: white;
-    margin-top: 5px;
-}
+        .reject-modal-content {
+            width: 100%;
+            max-width: 460px;
+            background: rgba(18, 18, 18, 0.95);
+            border-radius: 24px;
+            padding: 26px;
+        }
 
-/* Button */
-.btn {
-    padding: 12px 20px;
-    border-radius: 10px;
-    border: none;
-    background: linear-gradient(135deg, #d4af37, #f1d27a);
-    color: black;
-    font-weight: 600;
-    cursor: pointer;
-}
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
 
-.btn:hover {
-    transform: scale(1.05);
-}
+        .modal-header h3 {
+            color: #f87171;
+        }
 
-.messages {
-    margin-bottom: 20px;
-}
+        .close-modal {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.08);
+            color: white;
+            font-size: 22px;
+            cursor: pointer;
+        }
 
-.message {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 12px 14px;
-    border-radius: 12px;
-    margin-bottom: 10px;
-    font-size: 14px;
-}
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
 
-.message-text {
-    flex: 1;
-}
+        .cancel-btn {
+            background: rgba(255, 255, 255, 0.08);
+            color: white;
+        }
 
-.message-dismiss {
-    border: none;
-    background: transparent;
-    color: inherit;
-    font-size: 18px;
-    line-height: 1;
-    cursor: pointer;
-    opacity: 0.85;
-}
+        @media(max-width:900px) {
 
-.message-dismiss:hover {
-    opacity: 1;
-}
+            .dashboard {
+                flex-direction: column;
+            }
 
-.message.success {
-    background: rgba(34, 197, 94, 0.18);
-    border: 1px solid rgba(34, 197, 94, 0.35);
-    color: #bbf7d0;
-}
+            .sidebar {
+                width: 100%;
+                min-height: auto;
+            }
 
-.message.error {
-    background: rgba(239, 68, 68, 0.18);
-    border: 1px solid rgba(239, 68, 68, 0.35);
-    color: #fecaca;
-}
+            .main {
+                padding: 20px;
+            }
 
-/* Hide sections */
-.section {
-    display: none;
-}
+            .vehicle-grid {
+                grid-template-columns: 1fr;
+            }
+        }
 
-.active {
-    display: block;
-}
-</style>
+        .member-list-container {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        .member-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1.5fr 1.5fr 100px;
+            padding: 16px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            align-items: center;
+            transition: 0.3s;
+        }
+
+        .member-row:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .member-header {
+            background: rgba(212, 175, 55, 0.1);
+            font-weight: 700;
+            color: #d4af37;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+
+        .action-icons {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+        }
+
+        .action-icons a {
+            text-decoration: none;
+            font-size: 18px;
+            transition: 0.2s;
+        }
+
+        .action-icons a:hover {
+            transform: scale(1.2);
+        }
+    </style>
 </head>
 
 <body>
 
-<div class="dashboard">
+    <div class="dashboard">
 
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="logo">PARXY</div>
+        <!-- SIDEBAR -->
 
-        <div class="menu">
-            <a href="#" onclick="showSection('dashboard')">Dashboard</a>
-            <a href="#" onclick="showSection('members')">Members</a>
-            <a href="#" onclick="showSection('add')">Add Member</a>
-        </div>
-    </div>
+        <div class="sidebar">
 
-    <!-- Main Content -->
-    <div class="main">
-        <div class="topbar">
-            <a href="{% url 'logout_user' %}" class="logout-btn">Logout</a>
-        </div>
+            <div class="logo">PARXY</div>
 
-        {% if messages %}
-        <div class="messages">
-            {% for message in messages %}
-            <div class="message {{ message.tags }}">
-                <span class="message-text">{{ message }}</span>
-                <button type="button" class="message-dismiss" aria-label="Dismiss notification">&times;</button>
+            <div class="menu">
+
+                <a href="#" onclick="showSection('members-section')">
+                    Members
+                </a>
+
+                <a href="#" onclick="showSection('add-member-section')">
+                    Add Member
+                </a>
+
+                <a href="#" onclick="showSection('vehicle-section')">
+                    Vehicle Approvals
+                </a>
+
+                <a href="#" onclick="showSection('security-section')">
+                    Security Staff
+                </a>
+
             </div>
-            {% endfor %}
-        </div>
-        {% endif %}
 
-        <!-- Dashboard -->
-        <div id="dashboard" class="section active">
-            <div class="header">Admin Dashboard</div>
-            <div class="card">
-                <h3>Welcome Admin 👋</h3>
-                <p>Manage apartment parking members easily.</p>
+        </div>
+
+        <!-- MAIN -->
+
+        <div class="main">
+
+            <div class="topbar">
+
+                <a href="{% url 'logout_user' %}" class="logout-btn">
+                    Logout
+                </a>
+
             </div>
-            <div class="card">
-                <h3 class="section-title">Pending Vehicle Approvals</h3>
-                <form method="get" action="{% url 'admin_dashboard' %}" class="search-form">
-                    <input
-                        type="text"
-                        name="pending_search"
-                        value="{{ pending_search }}"
-                        placeholder="Search by vehicle number, owner, flat no, or phone">
-                    <button type="submit" class="btn">Search</button>
-                    {% if pending_search %}
-                    <a href="{% url 'admin_dashboard' %}" class="btn-secondary">Clear</a>
-                    {% endif %}
-                </form>
-                <div class="vehicle-grid">
-                    {% for vehicle in pending_vehicles %}
-                    <div class="vehicle-card">
-                        <h4>{{ vehicle.number }}</h4>
-                        <p><strong>Owner:</strong> {{ vehicle.user.nick_name|default:"Unknown Owner" }}</p>
-                        <p><strong>Flat No:</strong> {{ vehicle.user.flat_no|default:"N/A" }}</p>
-                        <p><strong>Phone:</strong> {{ vehicle.user.phone|default:"N/A" }}</p>
-                        <p><strong>Type:</strong> {{ vehicle.get_type_display }}</p>
-                        <p>
-                            <strong>RC Book:</strong>
-                            {% if vehicle.rc_book %}
-                            <a href="{{ vehicle.rc_book.url }}" target="_blank">View RC Book</a>
-                            {% else %}
-                            Not uploaded
-                            {% endif %}
-                        </p>
-                        <p>
-                            <strong>Vehicle Image:</strong>
-                            {% if vehicle.image %}
-                            <a href="{{ vehicle.image.url }}" target="_blank">View Image</a>
-                            {% else %}
-                            Not uploaded
-                            {% endif %}
-                        </p>
-                        <form method="post" action="{% url 'approve_vehicle' vehicle.id %}">
-                            {% csrf_token %}
-                            <div class="input-box">
-                                <label>Parking Slot</label>
-                                <input type="text" name="parking_slot" placeholder="A-12" required>
+
+            <!-- MEMBERS -->
+            <div id="members-section" class="section active">
+                <div class="header">Apartment Members</div>
+
+                <div class="card">
+                    <!-- Search Bar remains the same -->
+                    <form method="GET" action="{% url 'admin_dashboard' %}" style="margin-bottom: 24px;">
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" name="member_search" placeholder="Search by name, flat, or phone..."
+                                value="{{ member_search }}"
+                                style="flex: 1; padding: 14px; border-radius: 14px; background: rgba(0, 0, 0, 0.35); color: white; border: none; outline: none;">
+                            <button type="submit" class="btn primary-btn" style="width: 120px;">Search</button>
+                        </div>
+                    </form>
+
+                    <div class="member-list-container">
+                        <!-- Table Header Row -->
+                        <div class="member-row member-header">
+                            <div>Name</div>
+                            <div>Flat</div>
+                            <div>Phone</div>
+                            <div>DOB</div>
+                            <div style="text-align: right;">Actions</div>
+                        </div>
+
+                        <!-- Member Rows -->
+                        {% for u in users %}
+                        <div class="member-row">
+                            <div style="color: #f6e3a1; font-weight: 600;">{{ u.nick_name }}</div>
+                            <div>{{ u.flat_no }}</div>
+                            <div>{{ u.phone }}</div>
+                            <div style="color: #9ca3af; font-size: 14px;">{{ u.dob }}</div>
+                            <div class="action-icons">
+                                <a href="#" title="Edit">✏️</a>
+                                <a href="#" title="Delete" style="filter: grayscale(1);"
+                                    onclick="return confirm('Are you sure you want to delete {{ u.nick_name }}?')">🗑️</a>
                             </div>
-                            <button type="submit" class="btn">Approve Vehicle</button>
-                        </form>
+                        </div>
+                        {% empty %}
+                        <div style="padding: 40px; text-align: center; color: #9ca3af;">
+                            No members found.
+                        </div>
+                        {% endfor %}
                     </div>
-                    {% empty %}
-                    <p>
-                        {% if pending_search %}
-                        No pending vehicle requests match "{{ pending_search }}".
-                        {% else %}
-                        No pending vehicles found.
-                        {% endif %}
-                    </p>
-                    {% endfor %}
                 </div>
             </div>
-        </div>
 
-        <!-- Members List -->
-        <div id="members" class="section">
-            <div class="header">Members</div>
-            <div class="card">
-                <table>
-                    <tr>
-                        <th>Nickname</th>
-                        <th>Flat No</th>
-                        <th>Phone</th>
-                        <th>Date of Birth</th>
-                    </tr>
-                    {% for user in users %}
-                    <tr>
-                        <td>{{ user.nick_name }}</td>
-                        <td>{{ user.flat_no }}</td>
-                        <td>{{ user.phone }}</td>
-                        <td>{{ user.dob }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="4" style="text-align: center; color: #999;">No members found</td>
-                    </tr>
-                    {% endfor %}
-                </table>
+            <!-- ADD MEMBER -->
+
+            <!-- ADD MEMBER -->
+            <div id="add-member-section" class="section">
+                <div class="header">Add Member</div>
+                <div class="card">
+                    <div class="section-title">Add Apartment Member</div>
+
+                    <form method="post" action="{% url 'add_member' %}">
+                        {% csrf_token %}
+                        <div class="vehicle-grid">
+                            <div class="form-box">
+                                <label>Nick Name</label>
+                                <input type="text" name="nickname" required>
+                            </div>
+                            <div class="form-box">
+                                <label>Phone Number</label>
+                                <input type="text" name="phone" required>
+                            </div>
+                            <div class="form-box">
+                                <label>Date of Birth (DDMMYYYY)</label>
+                                <input type="text" name="dob" placeholder="12121998" required>
+                            </div>
+                            <div class="form-box">
+                                <label>Flat Number</label>
+                                <input type="text" name="flat_no" placeholder="A-101" required>
+                            </div>
+                        </div>
+                        <div style="margin-top:24px;">
+                            <button type="submit" class="btn primary-btn" style="max-width:260px;">
+                                Add Member
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
-        </div>
 
-        <!-- Add Member -->
-        <div id="add" class="section">
-            <div class="header">Add Member</div>
-            <div class="card">
+            <!-- VEHICLE APPROVALS -->
 
-                <form method="post" action="{% url 'add_member' %}">
-                    {% csrf_token %}
-                    <div class="input-box">
-                        <label>Nickname</label>
-                        <input type="text" name="nickname" placeholder="Enter nickname" required>
+            <div id="vehicle-section" class="section">
+
+                <div class="header">
+                    Pending Vehicle Approvals
+                </div>
+
+                <div class="card">
+
+                    <div class="vehicle-grid">
+
+                        {% for vehicle in pending_vehicles %}
+
+                        <div class="vehicle-card">
+
+                            <h4>{{ vehicle.number }}</h4>
+
+                            <p>
+                                <strong>Owner:</strong>
+                                {{ vehicle.user.nick_name }}
+                            </p>
+
+                            <p>
+                                <strong>Flat:</strong>
+                                {{ vehicle.user.flat_no }}
+                            </p>
+
+                            <p>
+                                <strong>Phone:</strong>
+                                {{ vehicle.user.phone }}
+                            </p>
+
+                            <p>
+                                <strong>Type:</strong>
+                                {{ vehicle.get_type_display }}
+                            </p>
+
+                            <p>
+                                <strong>RC Book:</strong>
+
+                                {% if vehicle.rc_book %}
+                                <a href="{{ vehicle.rc_book.url }}" target="_blank">
+                                    View RC Book
+                                </a>
+                                {% endif %}
+                            </p>
+
+                            <form method="post" action="{% url 'approve_vehicle' vehicle.id %}">
+
+                                {% csrf_token %}
+
+                                <div class="form-box">
+
+                                    <label>Parking Slot</label>
+
+                                    <input type="text" name="parking_slot" placeholder="Example: A-12" required>
+
+                                </div>
+
+                                <button type="submit" class="btn primary-btn">
+
+                                    Approve Vehicle
+
+                                </button>
+
+                            </form>
+
+                            <br>
+
+                            <form method="post" action="{% url 'reject_vehicle' vehicle.id %}">
+
+                                {% csrf_token %}
+
+                                <div class="form-box">
+
+                                    <label>Reject Reason</label>
+
+                                    <textarea name="reject_reason" placeholder="Enter reason" required></textarea>
+
+                                </div>
+
+                                <button type="submit" class="btn reject-btn">
+
+                                    Reject Vehicle
+
+                                </button>
+
+                            </form>
+
+                        </div>
+
+                        {% empty %}
+
+                        <p style="color:#9ca3af;">
+                            No pending vehicles.
+                        </p>
+
+                        {% endfor %}
+
                     </div>
 
-                    <div class="input-box">
-                        <label>Phone Number</label>
-                        <input type="tel" name="phone" placeholder="Enter phone number" required>
-                    </div>
-
-                    <div class="input-box">
-                        <label>Flat Number</label>
-                        <input type="text" name="flat_no" placeholder="Enter flat number" required>
-                    </div>
-
-                    <div class="input-box">
-                        <label>Date of Birth (DDMMYY)</label>
-                        <input type="text" name="dob" placeholder="DDMMYY" maxlength="6" required>
-                    </div>
-
-                    <button type="submit" class="btn">Add Member</button>
-                </form>
+                </div>
 
             </div>
+
+            <!-- SECURITY STAFF -->
+
+            <div id="security-section" class="section">
+
+                <div class="header">
+                    Security Staff Management
+                </div>
+
+                <!-- ADD SECURITY -->
+
+                <div class="card">
+
+                    <div class="section-title">
+                        Add Security Staff
+                    </div>
+
+                    <form method="post" action="{% url 'add_security' %}" enctype="multipart/form-data">
+
+                        {% csrf_token %}
+
+                        <div class="vehicle-grid">
+
+                            <div class="form-box">
+
+                                <label>Security Name</label>
+
+                                <input type="text" name="security_name" required>
+
+                            </div>
+
+                            <div class="form-box">
+
+                                <label>Phone Number</label>
+
+                                <input type="text" name="phone" required>
+
+                            </div>
+
+                            <div class="form-box">
+
+                                <label>Gender</label>
+
+                                <select name="gender" required>
+
+                                    <option value="">
+                                        Select Gender
+                                    </option>
+
+                                    <option value="Male">
+                                        Male
+                                    </option>
+
+                                    <option value="Female">
+                                        Female
+                                    </option>
+
+                                    <option value="Other">
+                                        Other
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+                            <div class="form-box">
+
+                                <label>Date of Birth</label>
+
+                                <input type="text" name="date_of_birth" placeholder="DDMMYY" maxlength="6"
+                                    pattern="[0-9]{6}" required>
+
+                            </div>
+
+                            <div class="form-box">
+
+                                <label>Photo</label>
+
+                                <input type="file" name="photo" required>
+
+                            </div>
+
+                        </div>
+
+                        <div style="margin-top:24px;">
+
+                            <button type="submit" class="btn primary-btn" style="max-width:260px;">
+
+                                Add Security Staff
+
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+                <!-- SECURITY LIST -->
+
+                <div class="card">
+
+                    <div class="section-title">
+                        Existing Security Staff
+                    </div>
+
+                    <div class="vehicle-grid">
+
+                        {% for security in security_staff %}
+
+                        <div class="vehicle-card">
+
+                            {% if security.photo %}
+
+                            <img src="{{ security.photo.url }}" class="security-photo">
+
+                            {% endif %}
+
+                            <h4 style="text-align:center; margin-top:18px;">
+                                {{ security.name }}
+                            </h4>
+
+                            <p>
+                                <strong>Phone:</strong>
+                                {{ security.phone }}
+                            </p>
+
+                            <p>
+                                <strong>Gender:</strong>
+                                {{ security.gender }}
+                            </p>
+
+                            <p>
+                                <strong>Date of Birth:</strong>
+                                {{ security.date_of_birth }}
+                            </p>
+
+                            <form method="post" action="{% url 'delete_security' security.id %}">
+
+                                {% csrf_token %}
+
+                                <button type="submit" class="btn reject-btn">
+
+                                    Remove Security
+
+                                </button>
+
+                            </form>
+
+                        </div>
+
+                        {% empty %}
+
+                        <p style="color:#9ca3af;">
+                            No security staff found.
+                        </p>
+
+                        {% endfor %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
         </div>
 
     </div>
 
-</div>
+    <script>
 
-<script>
-function showSection(id) {
-    document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-}
+        function showSection(sectionId) {
 
-document.querySelectorAll('.message-dismiss').forEach(function(button) {
-    button.addEventListener('click', function() {
-        const message = button.closest('.message');
-        if (message) {
-            message.remove();
+            document.querySelectorAll('.section')
+                .forEach(section => {
+
+                    section.classList.remove('active');
+
+                });
+
+            document.getElementById(sectionId)
+                .classList.add('active');
         }
-    });
-});
-</script>
+
+    </script>
 
 </body>
+
 </html>

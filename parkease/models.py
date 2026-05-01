@@ -21,5 +21,29 @@ class Vehicle(models.Model):
     rc_book = models.FileField(upload_to='rc_books/', null=True, blank=True)
     image = models.ImageField(upload_to='vehicles/', null=True, blank=True)
     is_approved=models.BooleanField(default=False)
+    is_rejected = models.BooleanField(default=False)
     parking_slot = models.CharField(max_length=20, null=True, blank=True)
-    
+    is_in = models.BooleanField(default=True)
+    qr_code = models.ImageField(upload_to='qr_codes/', null=True, blank=True)
+    reject_reason = models.TextField(null=True, blank=True)
+
+
+class SecurityStaff(models.Model):
+    name = models.CharField(max_length=100)
+    photo = models.ImageField(upload_to='security_photos/')
+    phone = models.CharField(max_length=15)
+    gender = models.CharField(max_length=20)
+    date_of_birth = models.CharField(max_length=10)
+
+    def __str__(self):
+            return self.name
+
+
+class VehicleLog(models.Model):
+    vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='logs')
+    staff = models.ForeignKey(SecurityStaff, on_delete=models.SET_NULL, null=True)
+    action = models.CharField(max_length=10) # 'IN' or 'OUT'
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-timestamp']
