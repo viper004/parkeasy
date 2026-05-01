@@ -124,6 +124,86 @@ body::before {
     margin-bottom: 20px;
 }
 
+.vehicle-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+}
+
+.vehicle-card {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 18px;
+    padding: 18px;
+}
+
+.vehicle-card h4 {
+    color: #f6e3a1;
+    margin-bottom: 8px;
+}
+
+.vehicle-card p {
+    color: #d7d7d7;
+    margin-bottom: 6px;
+    font-size: 14px;
+}
+
+.vehicle-card a {
+    color: #f1d27a;
+    text-decoration: none;
+}
+
+.vehicle-card a:hover {
+    text-decoration: underline;
+}
+
+.section-title {
+    color: #d4af37;
+    margin-bottom: 16px;
+}
+
+.vehicle-card form {
+    margin-top: 14px;
+}
+
+.search-form {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+}
+
+.search-form input {
+    flex: 1;
+    min-width: 220px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: none;
+    background: rgba(0,0,0,0.35);
+    color: white;
+}
+
+.search-form input::placeholder {
+    color: #9ca3af;
+}
+
+.btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 18px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.14);
+    background: rgba(255,255,255,0.08);
+    color: #f3f4f6;
+    text-decoration: none;
+}
+
+.btn-secondary:hover {
+    background: rgba(255,255,255,0.14);
+}
+
 /* Table */
 table {
     width: 100%;
@@ -184,10 +264,32 @@ tr {
 }
 
 .message {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
     padding: 12px 14px;
     border-radius: 12px;
     margin-bottom: 10px;
     font-size: 14px;
+}
+
+.message-text {
+    flex: 1;
+}
+
+.message-dismiss {
+    border: none;
+    background: transparent;
+    color: inherit;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0.85;
+}
+
+.message-dismiss:hover {
+    opacity: 1;
 }
 
 .message.success {
@@ -237,7 +339,10 @@ tr {
         {% if messages %}
         <div class="messages">
             {% for message in messages %}
-            <div class="message {{ message.tags }}">{{ message }}</div>
+            <div class="message {{ message.tags }}">
+                <span class="message-text">{{ message }}</span>
+                <button type="button" class="message-dismiss" aria-label="Dismiss notification">&times;</button>
+            </div>
             {% endfor %}
         </div>
         {% endif %}
@@ -249,6 +354,63 @@ tr {
                 <h3>Welcome Admin 👋</h3>
                 <p>Manage apartment parking members easily.</p>
             </div>
+            <div class="card">
+                <h3 class="section-title">Pending Vehicle Approvals</h3>
+                <form method="get" action="{% url 'admin_dashboard' %}" class="search-form">
+                    <input
+                        type="text"
+                        name="pending_search"
+                        value="{{ pending_search }}"
+                        placeholder="Search by vehicle number, owner, flat no, or phone">
+                    <button type="submit" class="btn">Search</button>
+                    {% if pending_search %}
+                    <a href="{% url 'admin_dashboard' %}" class="btn-secondary">Clear</a>
+                    {% endif %}
+                </form>
+                <div class="vehicle-grid">
+                    {% for vehicle in pending_vehicles %}
+                    <div class="vehicle-card">
+                        <h4>{{ vehicle.number }}</h4>
+                        <p><strong>Owner:</strong> {{ vehicle.user.nick_name|default:"Unknown Owner" }}</p>
+                        <p><strong>Flat No:</strong> {{ vehicle.user.flat_no|default:"N/A" }}</p>
+                        <p><strong>Phone:</strong> {{ vehicle.user.phone|default:"N/A" }}</p>
+                        <p><strong>Type:</strong> {{ vehicle.get_type_display }}</p>
+                        <p>
+                            <strong>RC Book:</strong>
+                            {% if vehicle.rc_book %}
+                            <a href="{{ vehicle.rc_book.url }}" target="_blank">View RC Book</a>
+                            {% else %}
+                            Not uploaded
+                            {% endif %}
+                        </p>
+                        <p>
+                            <strong>Vehicle Image:</strong>
+                            {% if vehicle.image %}
+                            <a href="{{ vehicle.image.url }}" target="_blank">View Image</a>
+                            {% else %}
+                            Not uploaded
+                            {% endif %}
+                        </p>
+                        <form method="post" action="{% url 'approve_vehicle' vehicle.id %}">
+                            {% csrf_token %}
+                            <div class="input-box">
+                                <label>Parking Slot</label>
+                                <input type="text" name="parking_slot" placeholder="A-12" required>
+                            </div>
+                            <button type="submit" class="btn">Approve Vehicle</button>
+                        </form>
+                    </div>
+                    {% empty %}
+                    <p>
+                        {% if pending_search %}
+                        No pending vehicle requests match "{{ pending_search }}".
+                        {% else %}
+                        No pending vehicles found.
+                        {% endif %}
+                    </p>
+                    {% endfor %}
+                </div>
+            </div>
         </div>
 
         <!-- Members List -->
@@ -258,18 +420,20 @@ tr {
                 <table>
                     <tr>
                         <th>Nickname</th>
+                        <th>Flat No</th>
                         <th>Phone</th>
                         <th>Date of Birth</th>
                     </tr>
                     {% for user in users %}
                     <tr>
                         <td>{{ user.nick_name }}</td>
+                        <td>{{ user.flat_no }}</td>
                         <td>{{ user.phone }}</td>
                         <td>{{ user.dob }}</td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="3" style="text-align: center; color: #999;">No members found</td>
+                        <td colspan="4" style="text-align: center; color: #999;">No members found</td>
                     </tr>
                     {% endfor %}
                 </table>
@@ -294,6 +458,11 @@ tr {
                     </div>
 
                     <div class="input-box">
+                        <label>Flat Number</label>
+                        <input type="text" name="flat_no" placeholder="Enter flat number" required>
+                    </div>
+
+                    <div class="input-box">
                         <label>Date of Birth (DDMMYY)</label>
                         <input type="text" name="dob" placeholder="DDMMYY" maxlength="6" required>
                     </div>
@@ -313,6 +482,15 @@ function showSection(id) {
     document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
     document.getElementById(id).classList.add('active');
 }
+
+document.querySelectorAll('.message-dismiss').forEach(function(button) {
+    button.addEventListener('click', function() {
+        const message = button.closest('.message');
+        if (message) {
+            message.remove();
+        }
+    });
+});
 </script>
 
 </body>

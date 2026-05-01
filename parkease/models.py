@@ -20,4 +20,6 @@ class Vehicle(models.Model):
     type= models.CharField(max_length=10,choices=vehicle_types)
     rc_book = models.FileField(upload_to='rc_books/', null=True, blank=True)
     image = models.ImageField(upload_to='vehicles/', null=True, blank=True)
+    is_approved=models.BooleanField(default=False)
+    parking_slot = models.CharField(max_length=20, null=True, blank=True)
     

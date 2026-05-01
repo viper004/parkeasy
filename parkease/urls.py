@@ -27,6 +27,7 @@ urlpatterns = [
     path('register/', views.create_user, name="create_user"),
     path('admin/dashboard/', views.admin_dashboard, name="admin_dashboard"),
     path('admin/members/add/', views.add_member, name="add_member"),
+    path('admin/vehicles/<int:vehicle_id>/approve/', views.approve_vehicle, name="approve_vehicle"),
     path('user/dashboard/', views.user_dashboard, name="user_dashboard"),
     path('user/vehicles/add/', views.add_vehicle, name="add_vehicle"),
 ]

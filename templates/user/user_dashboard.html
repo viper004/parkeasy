@@ -105,10 +105,32 @@ body::before {
 }
 
 .message {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
     padding: 12px 14px;
     border-radius: 12px;
     margin-bottom: 10px;
     font-size: 14px;
+}
+
+.message-text {
+    flex: 1;
+}
+
+.message-dismiss {
+    border: none;
+    background: transparent;
+    color: inherit;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0.85;
+}
+
+.message-dismiss:hover {
+    opacity: 1;
 }
 
 .message.success {
@@ -244,6 +266,11 @@ body::before {
     color: #f1d27a;
     font-size: 12px;
     margin-bottom: 14px;
+}
+
+.vehicle-card .badge.pending {
+    background: rgba(249, 115, 22, 0.16);
+    color: #fdba74;
 }
 
 .vehicle-number {
@@ -406,7 +433,10 @@ body::before {
         {% if messages %}
         <div class="messages">
             {% for message in messages %}
-            <div class="message {{ message.tags }}">{{ message }}</div>
+            <div class="message {{ message.tags }}">
+                <span class="message-text">{{ message }}</span>
+                <button type="button" class="message-dismiss" aria-label="Dismiss notification">&times;</button>
+            </div>
             {% endfor %}
         </div>
         {% endif %}
@@ -431,6 +461,10 @@ body::before {
                         <span>Registered Vehicles</span>
                         <strong>{{ vehicles|length }}</strong>
                     </div>
+                    <div class="summary-item">
+                        <span>Pending Approval</span>
+                        <strong>{{ pending_vehicles|length }}</strong>
+                    </div>
                 </div>
             </div>
         </div>
@@ -441,7 +475,7 @@ body::before {
                 <div class="section-title">
                     <div>
                         <h3>Your Registered Vehicles</h3>
-                        <p>All vehicles attached to your account are shown here.</p>
+                        <p>Only community-approved vehicles are shown here.</p>
                     </div>
                     <a href="#" onclick="showSection('add-vehicle'); return false;" class="btn">Add Vehicle</a>
                 </div>
@@ -456,6 +490,7 @@ body::before {
                         <img src="{{ vehicle.image.url }}" alt="Vehicle image for {{ vehicle.number }}" class="vehicle-thumb">
                         {% endif %}
                         <div class="vehicle-meta">Linked to Flat {{ user.flat_no }}</div>
+                        <div class="vehicle-meta">Parking Slot: {{ vehicle.parking_slot|default:"Not allotted" }}</div>
                         <div class="vehicle-meta">
                             {% if vehicle.rc_book %}
                             RC Book: <a href="{{ vehicle.rc_book.url }}" target="_blank" style="color: #f1d27a;">View file</a>
@@ -481,6 +516,37 @@ body::before {
                 </div>
                 {% endif %}
             </div>
+
+            <div class="card">
+                <div class="section-title">
+                    <div>
+                        <h3>Pending Approval</h3>
+                        <p>Vehicles submitted by you will appear here until the community approves them.</p>
+                    </div>
+                </div>
+
+                {% if pending_vehicles %}
+                <div class="vehicle-grid">
+                    {% for vehicle in pending_vehicles %}
+                    <div class="vehicle-card">
+                        <div class="badge pending">Pending Approval</div>
+                        <div class="vehicle-number">{{ vehicle.number }}</div>
+                        {% if vehicle.image %}
+                        <img src="{{ vehicle.image.url }}" alt="Vehicle image for {{ vehicle.number }}" class="vehicle-thumb">
+                        {% endif %}
+                        <div class="vehicle-meta">Linked to Flat {{ user.flat_no }}</div>
+                        <div class="vehicle-meta">Type: {{ vehicle.get_type_display }}</div>
+                        <div class="vehicle-meta">Status: Waiting for admin approval</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <h3>No pending vehicles</h3>
+                    <p>Once you add a vehicle, it will stay here until an admin approves it.</p>
+                </div>
+                {% endif %}
+            </div>
         </div>
 
         <div id="add-vehicle" class="section">
@@ -489,7 +555,7 @@ body::before {
                 <div class="section-title">
                     <div>
                         <h3>Register a Vehicle</h3>
-                        <p>Add a two wheeler or four wheeler to your account.</p>
+                        <p>Add a two wheeler or four wheeler to your account. It will be marked pending until the community approves it.</p>
                     </div>
                 </div>
 
@@ -526,7 +592,7 @@ body::before {
                     </div>
 
                     <div class="form-actions">
-                        <button type="submit" class="btn">Save Vehicle</button>
+                        <button type="submit" class="btn">Submit for Approval</button>
                     </div>
                 </form>
             </div>
@@ -563,6 +629,15 @@ if (vehicleImageInput && vehicleImagePreview) {
         };
     });
 }
+
+document.querySelectorAll('.message-dismiss').forEach(function(button) {
+    button.addEventListener('click', function() {
+        const message = button.closest('.message');
+        if (message) {
+            message.remove();
+        }
+    });
+});
 </script>
 
 </body>
