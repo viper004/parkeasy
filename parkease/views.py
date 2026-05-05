@@ -130,6 +130,7 @@ def admin_dashboard(request):
     pending_vehicles=pending_vehicles.order_by('number')
 
     security_staff=SecurityStaff.objects.all()
+    recent_logs = VehicleLog.objects.select_related('vehicle', 'staff').all()[:20]
 
     return render(
         request,
@@ -141,6 +142,7 @@ def admin_dashboard(request):
             'pending_search':search_query,
             'member_search':member_search,
             'security_staff':security_staff,
+            'recent_logs': recent_logs,
         },
     )
 

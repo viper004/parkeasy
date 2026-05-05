@@ -411,6 +411,49 @@
             font-size: 30px;
             font-weight: 700;
         }
+
+        .log-list {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 18px;
+            overflow: hidden;
+        }
+
+        .log-row {
+            display: grid;
+            grid-template-columns: 1.2fr 1.2fr 0.7fr 1fr 1fr;
+            gap: 12px;
+            padding: 16px 20px;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .log-header {
+            background: rgba(212, 175, 55, 0.1);
+            color: #d4af37;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 12px;
+        }
+
+        .badge-in,
+        .badge-out {
+            font-weight: 700;
+        }
+
+        .badge-in {
+            color: #86efac;
+        }
+
+        .badge-out {
+            color: #fca5a5;
+        }
+
+        @media(max-width:900px) {
+            .log-row {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 
@@ -440,6 +483,10 @@
 
                 <a href="#" onclick="showSection('security-section')">
                     Security Staff
+                </a>
+
+                <a href="#" onclick="showSection('logs-section')">
+                    Vehicle Logs
                 </a>
 
             </div>
@@ -651,6 +698,41 @@
 
                 </div>
 
+            </div>
+
+            <div id="logs-section" class="section">
+
+                <div class="header">Vehicle Logs</div>
+
+                <div class="card">
+                    <div class="section-title">Recent Gate Activity</div>
+
+                    <div class="log-list">
+                        <div class="log-row log-header">
+                            <div>Vehicle</div>
+                            <div>Member</div>
+                            <div>Action</div>
+                            <div>Security</div>
+                            <div>Time</div>
+                        </div>
+
+                        {% for log in recent_logs %}
+                        <div class="log-row">
+                            <div style="color: #f6e3a1; font-weight: 600;">{{ log.vehicle.number }}</div>
+                            <div>{{ log.vehicle.user.nick_name|default:"Unknown Member" }}</div>
+                            <div class="{% if log.action == 'IN' %}badge-in{% else %}badge-out{% endif %}">
+                                {{ log.action }}
+                            </div>
+                            <div>{{ log.staff.name|default:"Unknown Staff" }}</div>
+                            <div style="color: #9ca3af;">{{ log.timestamp|date:"d M Y, h:i A" }}</div>
+                        </div>
+                        {% empty %}
+                        <div style="padding: 40px; text-align: center; color: #9ca3af;">
+                            No vehicle log activity recorded yet.
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
 
             <!-- SECURITY STAFF -->
