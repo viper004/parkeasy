@@ -418,6 +418,44 @@
             overflow: hidden;
         }
 
+        .vehicle-list-container {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 18px;
+            overflow: hidden;
+        }
+
+        .vehicle-list-row {
+            display: grid;
+            grid-template-columns: 1.2fr 1.2fr 1fr 1fr 1fr 0.8fr;
+            gap: 12px;
+            padding: 16px 20px;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .vehicle-list-row:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .vehicle-list-header {
+            background: rgba(212, 175, 55, 0.1);
+            color: #d4af37;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 12px;
+        }
+
+        .rc-link {
+            color: #f1d27a;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .rc-link:hover {
+            text-decoration: underline;
+        }
+
         .log-row {
             display: grid;
             grid-template-columns: 1.2fr 1.2fr 0.7fr 1fr 1fr;
@@ -453,6 +491,10 @@
             .log-row {
                 grid-template-columns: 1fr;
             }
+
+            .vehicle-list-row {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -479,6 +521,10 @@
 
                 <a href="#" onclick="showSection('vehicle-section')">
                     Vehicle Approvals
+                </a>
+
+                <a href="#" onclick="showSection('all-vehicles-section')">
+                    All Vehicles
                 </a>
 
                 <a href="#" onclick="showSection('security-section')">
@@ -698,6 +744,55 @@
 
                 </div>
 
+            </div>
+
+            <div id="all-vehicles-section" class="section">
+
+                <div class="header">All Vehicles</div>
+
+                <div class="card">
+                    <form method="GET" action="{% url 'admin_dashboard' %}" style="margin-bottom: 24px;">
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" name="vehicle_search"
+                                placeholder="Search by vehicle number, owner, flat, or phone..."
+                                value="{{ vehicle_search }}"
+                                style="flex: 1; padding: 14px; border-radius: 14px; background: rgba(0, 0, 0, 0.35); color: white; border: none; outline: none;">
+                            <button type="submit" class="btn primary-btn" style="width: 120px;">Search</button>
+                        </div>
+                    </form>
+
+                    <div class="vehicle-list-container">
+                        <div class="vehicle-list-row vehicle-list-header">
+                            <div>Vehicle</div>
+                            <div>Owner</div>
+                            <div>Phone</div>
+                            <div>Flat</div>
+                            <div>RC Book</div>
+                            <div>Type</div>
+                        </div>
+
+                        {% for vehicle in all_vehicles %}
+                        <div class="vehicle-list-row">
+                            <div style="color: #f6e3a1; font-weight: 600;">{{ vehicle.number }}</div>
+                            <div>{{ vehicle.user.nick_name|default:"Unknown Owner" }}</div>
+                            <div>{{ vehicle.user.phone|default:"N/A" }}</div>
+                            <div>{{ vehicle.user.flat_no|default:"N/A" }}</div>
+                            <div>
+                                {% if vehicle.rc_book %}
+                                <a href="{{ vehicle.rc_book.url }}" target="_blank" class="rc-link">View PDF</a>
+                                {% else %}
+                                <span style="color: #9ca3af;">Not uploaded</span>
+                                {% endif %}
+                            </div>
+                            <div>{{ vehicle.get_type_display }}</div>
+                        </div>
+                        {% empty %}
+                        <div style="padding: 40px; text-align: center; color: #9ca3af;">
+                            No vehicles found.
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
 
             <div id="logs-section" class="section">

@@ -99,6 +99,7 @@ def admin_dashboard(request):
     admin=Admin.objects.get(id=admin_id)
 
     member_search=request.GET.get('member_search','').strip()
+    vehicle_search = request.GET.get('vehicle_search', '').strip()
 
     users=User.objects.all()
 
@@ -129,6 +130,18 @@ def admin_dashboard(request):
 
     pending_vehicles=pending_vehicles.order_by('number')
 
+    all_vehicles = Vehicle.objects.select_related('user')
+
+    if vehicle_search:
+        all_vehicles = all_vehicles.filter(
+            Q(number__icontains=vehicle_search) |
+            Q(user__nick_name__icontains=vehicle_search) |
+            Q(user__flat_no__icontains=vehicle_search) |
+            Q(user__phone__icontains=vehicle_search)
+        )
+
+    all_vehicles = all_vehicles.order_by('number')
+
     security_staff=SecurityStaff.objects.all()
     recent_logs = VehicleLog.objects.select_related('vehicle', 'staff').all()[:20]
 
@@ -141,8 +154,10 @@ def admin_dashboard(request):
             'pending_vehicles':pending_vehicles,
             'pending_search':search_query,
             'member_search':member_search,
+            'vehicle_search': vehicle_search,
             'security_staff':security_staff,
             'recent_logs': recent_logs,
+            'all_vehicles': all_vehicles,
         },
     )
 
