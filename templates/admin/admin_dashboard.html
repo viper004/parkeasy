@@ -8,6 +8,7 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
     <style>
         * {
@@ -339,14 +340,76 @@
             justify-content: flex-end;
         }
 
-        .action-icons a {
-            text-decoration: none;
+        .icon-btn {
+            border: none;
+            background: transparent;
             font-size: 18px;
+            color: white;
+            cursor: pointer;
             transition: 0.2s;
         }
 
-        .action-icons a:hover {
+        .icon-btn:hover {
             transform: scale(1.2);
+        }
+
+        .icon-btn.edit-icon {
+            color: #f6e3a1;
+        }
+
+        .icon-btn.delete-icon {
+            color: #f87171;
+        }
+
+        .member-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.72);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            padding: 20px;
+        }
+
+        .member-modal.show {
+            display: flex;
+        }
+
+        .member-modal-content {
+            width: 100%;
+            max-width: 560px;
+            background: rgba(18, 18, 18, 0.96);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 26px;
+            padding: 28px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+        }
+
+        .member-modal-title {
+            color: #f6e3a1;
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .member-modal-text {
+            color: #cbd5e1;
+            line-height: 1.6;
+            margin-bottom: 18px;
+        }
+
+        .success-badge {
+            width: 68px;
+            height: 68px;
+            margin: 0 auto 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #d4af37, #f1d27a);
+            color: black;
+            font-size: 30px;
+            font-weight: 700;
         }
     </style>
 </head>
@@ -428,9 +491,14 @@
                             <div>{{ u.phone }}</div>
                             <div style="color: #9ca3af; font-size: 14px;">{{ u.dob }}</div>
                             <div class="action-icons">
-                                <a href="#" title="Edit">✏️</a>
-                                <a href="#" title="Delete" style="filter: grayscale(1);"
-                                    onclick="return confirm('Are you sure you want to delete {{ u.nick_name }}?')">🗑️</a>
+                                <button type="button" class="icon-btn edit-icon" title="Edit"
+                                    onclick="openEditMemberModal('{{ u.id }}', '{{ u.nick_name|escapejs }}', '{{ u.flat_no|escapejs }}', '{{ u.phone|escapejs }}', '{{ u.dob|escapejs }}')">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                                <button type="button" class="icon-btn delete-icon" title="Delete"
+                                    onclick="deleteMember('{{ u.id }}', '{{ u.nick_name|escapejs }}')">
+                                    <i class="bi bi-trash3-fill"></i>
+                                </button>
                             </div>
                         </div>
                         {% empty %}
@@ -753,7 +821,59 @@
 
     </div>
 
+    <div id="editMemberModal" class="member-modal" onclick="handleModalBackdrop(event, 'editMemberModal')">
+        <div class="member-modal-content">
+            <div class="modal-header">
+                <div>
+                    <h3 class="member-modal-title">Edit Member Details</h3>
+                    <p class="member-modal-text">Update the member information and save the changes.</p>
+                </div>
+                <button type="button" class="close-modal" onclick="closeModal('editMemberModal')">&times;</button>
+            </div>
+
+            <form id="editMemberForm" method="post">
+                {% csrf_token %}
+                <div class="vehicle-grid">
+                    <div class="form-box">
+                        <label>Nick Name</label>
+                        <input type="text" name="nickname" id="editNickname" required>
+                    </div>
+                    <div class="form-box">
+                        <label>Phone Number</label>
+                        <input type="text" name="phone" id="editPhone" required>
+                    </div>
+                    <div class="form-box">
+                        <label>Date of Birth (DDMMYYYY)</label>
+                        <input type="text" name="dob" id="editDob" required>
+                    </div>
+                    <div class="form-box">
+                        <label>Flat Number</label>
+                        <input type="text" name="flat_no" id="editFlatNo" required>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn cancel-btn" onclick="closeModal('editMemberModal')">Cancel</button>
+                    <button type="submit" class="btn primary-btn">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="successModal" class="member-modal" onclick="handleModalBackdrop(event, 'successModal')">
+        <div class="member-modal-content" style="max-width: 420px; text-align: center;">
+            <button type="button" class="close-modal" onclick="closeModal('successModal')"
+                style="margin-left: auto; display: block;">&times;</button>
+            <div class="success-badge">OK</div>
+            <h3 class="member-modal-title">Update Successful</h3>
+            <p class="member-modal-text" id="successModalMessage">Member details updated successfully.</p>
+            <button type="button" class="btn primary-btn" onclick="closeModal('successModal')">Done</button>
+        </div>
+    </div>
+
     <script>
+
+        const csrfToken = '{{ csrf_token }}';
 
         function showSection(sectionId) {
 
@@ -767,6 +887,56 @@
             document.getElementById(sectionId)
                 .classList.add('active');
         }
+
+        function openEditMemberModal(memberId, nickName, flatNo, phone, dob) {
+            const form = document.getElementById('editMemberForm');
+            form.action = `/admin/members/${memberId}/update/`;
+            document.getElementById('editNickname').value = nickName;
+            document.getElementById('editFlatNo').value = flatNo;
+            document.getElementById('editPhone').value = phone;
+            document.getElementById('editDob').value = dob;
+            document.getElementById('editMemberModal').classList.add('show');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+        }
+
+        function handleModalBackdrop(event, modalId) {
+            if (event.target.id === modalId) {
+                closeModal(modalId);
+            }
+        }
+
+        function deleteMember(memberId, memberName) {
+            if (!confirm(`Are you sure you want to delete ${memberName}?`)) {
+                return;
+            }
+
+            const form = document.createElement('form');
+            form.method = 'post';
+            form.action = `/admin/members/${memberId}/delete/`;
+
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrfmiddlewaretoken';
+            csrfInput.value = csrfToken;
+
+            form.appendChild(csrfInput);
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        {% if messages %}
+        window.addEventListener('load', function () {
+            {% for message in messages %}
+            {% if message.tags == 'success' and message|stringformat:"s" == 'Member updated successfully.' %}
+            document.getElementById('successModalMessage').textContent = '{{ message|escapejs }}';
+            document.getElementById('successModal').classList.add('show');
+            {% endif %}
+            {% endfor %}
+        });
+        {% endif %}
 
     </script>
 

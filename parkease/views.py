@@ -238,6 +238,62 @@ def add_member(request):
     return redirect('admin_dashboard')
 
 
+def update_member(request, member_id):
+    admin_id = request.session.get('admin_id')
+    if not admin_id:
+        return redirect('home')
+
+    if request.method != "POST":
+        return redirect('admin_dashboard')
+
+    member = User.objects.filter(id=member_id).first()
+    if not member:
+        messages.error(request, 'Member not found.')
+        return redirect('admin_dashboard')
+
+    nick_name = request.POST.get('nickname', '').strip()
+    phone = request.POST.get('phone', '').strip()
+    dob = request.POST.get('dob', '').strip()
+    flat_no = request.POST.get('flat_no', '').strip().upper()
+
+    if not nick_name or not phone or not dob or not flat_no:
+        messages.error(request, 'All member fields are required.')
+        return redirect('admin_dashboard')
+
+    duplicate_member = User.objects.filter(phone=phone, dob=dob).exclude(id=member.id).first()
+    if duplicate_member:
+        messages.error(request, 'Another member with this phone number and DOB already exists.')
+        return redirect('admin_dashboard')
+
+    member.nick_name = nick_name
+    member.phone = phone
+    member.dob = dob
+    member.flat_no = flat_no
+    member.save(update_fields=['nick_name', 'phone', 'dob', 'flat_no'])
+
+    messages.success(request, 'Member updated successfully.')
+    return redirect('admin_dashboard')
+
+
+def delete_member(request, member_id):
+    admin_id = request.session.get('admin_id')
+    if not admin_id:
+        return redirect('home')
+
+    if request.method != "POST":
+        return redirect('admin_dashboard')
+
+    member = User.objects.filter(id=member_id).first()
+    if not member:
+        messages.error(request, 'Member not found.')
+        return redirect('admin_dashboard')
+
+    member_name = member.nick_name or 'Member'
+    member.delete()
+    messages.success(request, f'{member_name} deleted successfully.')
+    return redirect('admin_dashboard')
+
+
 def user_dashboard(request):
     user_id = request.session.get('user_id')
     if not user_id:
