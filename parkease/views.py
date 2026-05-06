@@ -223,6 +223,58 @@ def reject_vehicle(request, vehicle_id):
 
     return redirect('admin_dashboard')
 
+
+def update_vehicle_slot(request, vehicle_id):
+    admin_id = request.session.get('admin_id')
+    if not admin_id:
+        return redirect('home')
+
+    if request.method != "POST":
+        return redirect('admin_dashboard')
+
+    vehicle = Vehicle.objects.filter(id=vehicle_id).select_related('user').first()
+    if not vehicle:
+        messages.error(request, 'Vehicle not found.')
+        return redirect('admin_dashboard')
+
+    parking_slot = request.POST.get('parking_slot', '').strip().upper()
+    if not parking_slot:
+        messages.error(request, 'Parking slot is required.')
+        return redirect('admin_dashboard')
+
+    vehicle.parking_slot = parking_slot
+    vehicle.save(update_fields=['parking_slot'])
+
+    messages.success(request, f'Parking slot updated for vehicle {vehicle.number}.')
+    return redirect('admin_dashboard')
+
+
+def admin_delete_vehicle(request, vehicle_id):
+    admin_id = request.session.get('admin_id')
+    if not admin_id:
+        return redirect('home')
+
+    if request.method != "POST":
+        return redirect('admin_dashboard')
+
+    vehicle = Vehicle.objects.filter(id=vehicle_id).first()
+    if not vehicle:
+        messages.error(request, 'Vehicle not found.')
+        return redirect('admin_dashboard')
+
+    vehicle_number = vehicle.number
+
+    if vehicle.rc_book:
+        vehicle.rc_book.delete(save=False)
+    if vehicle.image:
+        vehicle.image.delete(save=False)
+    if vehicle.qr_code:
+        vehicle.qr_code.delete(save=False)
+
+    vehicle.delete()
+    messages.success(request, f'Vehicle {vehicle_number} deleted successfully.')
+    return redirect('admin_dashboard')
+
 def add_member(request):
     admin_id = request.session.get('admin_id')
     if not admin_id:

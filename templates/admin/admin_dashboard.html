@@ -426,7 +426,7 @@
 
         .vehicle-list-row {
             display: grid;
-            grid-template-columns: 1.2fr 1.2fr 1fr 1fr 1fr 0.8fr;
+            grid-template-columns: 1.1fr 1.1fr 1fr 0.9fr 1fr 0.8fr 0.9fr 0.8fr;
             gap: 12px;
             padding: 16px 20px;
             align-items: center;
@@ -767,8 +767,10 @@
                             <div>Owner</div>
                             <div>Phone</div>
                             <div>Flat</div>
+                            <div>Parking Slot</div>
                             <div>RC Book</div>
                             <div>Type</div>
+                            <div>Actions</div>
                         </div>
 
                         {% for vehicle in all_vehicles %}
@@ -777,6 +779,7 @@
                             <div>{{ vehicle.user.nick_name|default:"Unknown Owner" }}</div>
                             <div>{{ vehicle.user.phone|default:"N/A" }}</div>
                             <div>{{ vehicle.user.flat_no|default:"N/A" }}</div>
+                            <div>{{ vehicle.parking_slot|default:"Not allotted" }}</div>
                             <div>
                                 {% if vehicle.rc_book %}
                                 <a href="{{ vehicle.rc_book.url }}" target="_blank" class="rc-link">View PDF</a>
@@ -785,6 +788,16 @@
                                 {% endif %}
                             </div>
                             <div>{{ vehicle.get_type_display }}</div>
+                            <div class="action-icons">
+                                <button type="button" class="icon-btn edit-icon" title="Edit parking slot"
+                                    onclick="openEditVehicleModal('{{ vehicle.id }}', '{{ vehicle.number|escapejs }}', '{{ vehicle.parking_slot|default:''|escapejs }}')">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                                <button type="button" class="icon-btn delete-icon" title="Delete vehicle"
+                                    onclick="deleteVehicle('{{ vehicle.id }}', '{{ vehicle.number|escapejs }}')">
+                                    <i class="bi bi-trash3-fill"></i>
+                                </button>
+                            </div>
                         </div>
                         {% empty %}
                         <div style="padding: 40px; text-align: center; color: #9ca3af;">
@@ -1048,6 +1061,35 @@
         </div>
     </div>
 
+    <div id="editVehicleModal" class="member-modal" onclick="handleModalBackdrop(event, 'editVehicleModal')">
+        <div class="member-modal-content">
+            <div class="modal-header">
+                <div>
+                    <h3 class="member-modal-title">Edit Vehicle Slot</h3>
+                    <p class="member-modal-text">Only the parking slot can be changed from this modal.</p>
+                </div>
+                <button type="button" class="close-modal" onclick="closeModal('editVehicleModal')">&times;</button>
+            </div>
+
+            <form id="editVehicleForm" method="post">
+                {% csrf_token %}
+                <div class="form-box">
+                    <label>Vehicle Number</label>
+                    <input type="text" id="editVehicleNumber" readonly>
+                </div>
+                <div class="form-box">
+                    <label>Parking Slot</label>
+                    <input type="text" name="parking_slot" id="editVehicleSlot" placeholder="Example: A-12" required>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn cancel-btn" onclick="closeModal('editVehicleModal')">Cancel</button>
+                    <button type="submit" class="btn primary-btn">Save Slot</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
 
         const csrfToken = '{{ csrf_token }}';
@@ -1075,6 +1117,14 @@
             document.getElementById('editMemberModal').classList.add('show');
         }
 
+        function openEditVehicleModal(vehicleId, vehicleNumber, parkingSlot) {
+            const form = document.getElementById('editVehicleForm');
+            form.action = `/admin/vehicles/${vehicleId}/update-slot/`;
+            document.getElementById('editVehicleNumber').value = vehicleNumber;
+            document.getElementById('editVehicleSlot').value = parkingSlot;
+            document.getElementById('editVehicleModal').classList.add('show');
+        }
+
         function closeModal(modalId) {
             document.getElementById(modalId).classList.remove('show');
         }
@@ -1093,6 +1143,25 @@
             const form = document.createElement('form');
             form.method = 'post';
             form.action = `/admin/members/${memberId}/delete/`;
+
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrfmiddlewaretoken';
+            csrfInput.value = csrfToken;
+
+            form.appendChild(csrfInput);
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        function deleteVehicle(vehicleId, vehicleNumber) {
+            if (!confirm(`Are you sure you want to delete vehicle ${vehicleNumber}?`)) {
+                return;
+            }
+
+            const form = document.createElement('form');
+            form.method = 'post';
+            form.action = `/admin/vehicles/${vehicleId}/delete/`;
 
             const csrfInput = document.createElement('input');
             csrfInput.type = 'hidden';
