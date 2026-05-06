@@ -33,6 +33,7 @@ urlpatterns = [
     path('admin/vehicles/<int:vehicle_id>/reject/', views.reject_vehicle, name="reject_vehicle"),
     path('user/dashboard/', views.user_dashboard, name="user_dashboard"),
     path('user/vehicles/add/', views.add_vehicle, name="add_vehicle"),
+    path('user/vehicles/<int:vehicle_id>/delete/', views.delete_vehicle, name="delete_vehicle"),
     path('reapply-vehicle/',views.reapply_vehicle,name='reapply_vehicle'),
     path('add-security/',views.add_security,name='add_security'),
     path('delete-security/<int:id>/',views.delete_security,name='delete_security'),

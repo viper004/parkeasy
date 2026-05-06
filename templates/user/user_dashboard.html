@@ -405,6 +405,11 @@
             color: white;
         }
 
+        .danger-btn {
+            background: linear-gradient(135deg, #b91c1c, #ef4444);
+            color: white;
+        }
+
         /* =========================
    MOBILE
 ========================= */
@@ -577,6 +582,13 @@
                                 </p>
                                 {% endif %}
                             </div>
+                            <form method="post" action="{% url 'delete_vehicle' vehicle.id %}" style="margin-top:12px;"
+                                onsubmit="return confirmVehicleRemoval('{{ vehicle.number }}')">
+                                {% csrf_token %}
+                                <button type="submit" class="btn danger-btn" style="width:100%;">
+                                    Remove Vehicle
+                                </button>
+                            </form>
                         </div>
 
                         {% endfor %}
@@ -1006,6 +1018,10 @@
 
         function closeQRModal() {
             document.getElementById('qrModal').style.display = 'none';
+        }
+
+        function confirmVehicleRemoval(number) {
+            return window.confirm("Remove vehicle " + number + " from your profile? This will also delete it from the database.");
         }
 
         // Update your existing window.onclick to also close the QR modal

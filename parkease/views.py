@@ -389,6 +389,33 @@ def add_vehicle(request):
     return redirect('user_dashboard')
 
 
+def delete_vehicle(request, vehicle_id):
+    user_id = request.session.get('user_id')
+    if not user_id:
+        return redirect('home')
+
+    if request.method != "POST":
+        return redirect('user_dashboard')
+
+    vehicle = Vehicle.objects.filter(id=vehicle_id, user_id=user_id).first()
+    if not vehicle:
+        messages.error(request, 'Vehicle not found.')
+        return redirect('user_dashboard')
+
+    vehicle_number = vehicle.number
+
+    if vehicle.rc_book:
+        vehicle.rc_book.delete(save=False)
+    if vehicle.image:
+        vehicle.image.delete(save=False)
+    if vehicle.qr_code:
+        vehicle.qr_code.delete(save=False)
+
+    vehicle.delete()
+    messages.success(request, f'Vehicle {vehicle_number} removed successfully.')
+    return redirect('user_dashboard')
+
+
 def create_user(request):
     if request.method == "POST":
         return redirect("home")
