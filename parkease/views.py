@@ -5,11 +5,16 @@ from django.http import JsonResponse
 from django.utils import timezone
 from django.shortcuts import redirect, render
 import qrcode
+import re
 from io import BytesIO
 from django.core.files import File
 
 from .decorators import account_login_required, admin_login_required, login_required
 from .models import *
+
+
+def _is_exact_digits(value, length):
+    return bool(re.fullmatch(rf"\d{{{length}}}", value))
 
 def home(request):
     return render(request,'index.html')
@@ -292,6 +297,14 @@ def add_member(request):
         messages.error(request, 'All member fields are required.')
         return redirect('admin_dashboard')
 
+    if not _is_exact_digits(phone, 10):
+        messages.error(request, 'Phone number must be exactly 10 digits.')
+        return redirect('admin_dashboard')
+
+    if not _is_exact_digits(dob, 6):
+        messages.error(request, 'DOB must be exactly 6 digits in DDMMYY format.')
+        return redirect('admin_dashboard')
+
     existing_user = User.objects.filter(phone=phone, dob=dob).first()
     if existing_user:
         messages.error(request, 'A member with this phone number and DOB already exists.')
@@ -327,6 +340,14 @@ def update_member(request, member_id):
 
     if not nick_name or not phone or not dob or not flat_no:
         messages.error(request, 'All member fields are required.')
+        return redirect('admin_dashboard')
+
+    if not _is_exact_digits(phone, 10):
+        messages.error(request, 'Phone number must be exactly 10 digits.')
+        return redirect('admin_dashboard')
+
+    if not _is_exact_digits(dob, 6):
+        messages.error(request, 'DOB must be exactly 6 digits in DDMMYY format.')
         return redirect('admin_dashboard')
 
     duplicate_member = User.objects.filter(phone=phone, dob=dob).exclude(id=member.id).first()
